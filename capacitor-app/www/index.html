@@ -1,0 +1,1122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Draw Room</title>
+<meta name="description" content="A honest UK Lotto and EuroMillions number generator and draw-history explorer — no fake predictions, just real stats.">
+<style>
+  :root{
+    --ink:#f7f5ef;
+    --paper:#faf8f2;
+    --surface:#ffffff;
+    --surface-2:#f0ede3;
+    --line:#e2ddce;
+    --text:#241f18;
+    --text-dim:#6b6455;
+    --brass:#9c7a1f;
+    --brass-strong:#7a5f16;
+    --teal:#1f7d72;
+    --teal-strong:#155953;
+    --red:#a3392c;
+    --shadow: 0 1px 2px rgba(36,31,24,.06), 0 8px 24px -12px rgba(36,31,24,.18);
+    font-synthesis: none;
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --ink:#12110d;
+      --paper:#15140f;
+      --surface:#1c1a14;
+      --surface-2:#242119;
+      --line:#332e22;
+      --text:#f1ede2;
+      --text-dim:#a99f8a;
+      --brass:#d9b24c;
+      --brass-strong:#eccb6b;
+      --teal:#4bbdae;
+      --teal-strong:#6fd4c6;
+      --red:#e08774;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px -14px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#12110d;
+    --paper:#15140f;
+    --surface:#1c1a14;
+    --surface-2:#242119;
+    --line:#332e22;
+    --text:#f1ede2;
+    --text-dim:#a99f8a;
+    --brass:#d9b24c;
+    --brass-strong:#eccb6b;
+    --teal:#4bbdae;
+    --teal-strong:#6fd4c6;
+    --red:#e08774;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px -14px rgba(0,0,0,.6);
+  }
+
+  @font-face{
+    font-family:'Fraunces';
+    src:local('Fraunces');
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  *{box-sizing:border-box;}
+  html,body{background:var(--paper);color:var(--text);}
+  body{
+    margin:0;
+    font-family:'Inter',ui-sans-serif,system-ui,sans-serif;
+    padding-inline:20px;
+    padding-block:28px 60px;
+    max-width:840px;
+    margin-inline:auto;
+    line-height:1.5;
+  }
+  h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;letter-spacing:-0.01em;margin:0;}
+  .num{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;}
+
+  header.top{
+    display:flex;justify-content:space-between;align-items:flex-end;gap:16px;
+    margin-bottom:14px;flex-wrap:wrap;
+  }
+  header.top .brand h1{font-size:1.7rem;color:var(--text);}
+  header.top .brand p{margin:.25rem 0 0;color:var(--text-dim);font-size:.9rem;max-width:36ch;}
+  .theme-btn{
+    border:1px solid var(--line);background:var(--surface);color:var(--text-dim);
+    border-radius:20px;padding:6px 12px;font-size:.78rem;cursor:pointer;font-family:'Inter';
+  }
+
+  .auth-bar{
+    display:flex;align-items:center;gap:10px;justify-content:flex-end;flex-wrap:wrap;
+    margin-bottom:18px;font-size:.84rem;color:var(--text-dim);
+  }
+  .auth-bar input[type=email]{
+    padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);
+    color:var(--text);font-family:'Inter';font-size:.84rem;min-width:200px;
+  }
+  .auth-btn{
+    border:1px solid var(--teal);background:transparent;color:var(--teal-strong);border-radius:8px;
+    padding:8px 14px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:'Inter';
+  }
+  .auth-chip{
+    display:flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:999px;
+    padding:5px 10px 5px 5px;
+  }
+  .auth-chip img{width:22px;height:22px;border-radius:50%;}
+
+  .game-tabs{display:flex;gap:8px;margin-bottom:20px;}
+  .game-tab{
+    flex:1;padding:12px 14px;border-radius:14px;border:1px solid var(--line);
+    background:var(--surface);cursor:pointer;text-align:left;transition:border-color .15s, background .15s;
+  }
+  .game-tab strong{display:block;font-family:'Fraunces';font-size:1.05rem;font-weight:600;}
+  .game-tab span{color:var(--text-dim);font-size:.78rem;}
+  .game-tab.active{border-color:var(--brass);background:var(--surface-2);}
+  .game-tab.active strong{color:var(--brass-strong);}
+
+  section{
+    background:var(--surface);border:1px solid var(--line);border-radius:18px;
+    padding:22px;margin-bottom:18px;box-shadow:var(--shadow);
+  }
+  section h2{font-size:1.15rem;margin-bottom:4px;}
+  section .sub{color:var(--text-dim);font-size:.85rem;margin-bottom:16px;}
+
+  .mode-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .mode-btn{
+    padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);
+    color:var(--text);font-size:.82rem;cursor:pointer;font-family:'Inter';font-weight:500;
+  }
+  .mode-btn.active{background:var(--teal);border-color:var(--teal);color:#fff;}
+  :root:not([data-theme="light"]) .mode-btn.active{color:#0c1512;}
+  :root[data-theme="dark"] .mode-btn.active{color:#0c1512;}
+
+  .toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;font-size:.86rem;color:var(--text-dim);}
+  .toggle-row input{accent-color:var(--teal);width:16px;height:16px;}
+
+  .lines{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;min-height:52px;}
+  .line{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .ball{
+    width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono';font-weight:600;font-size:.92rem;
+    background:var(--surface-2);border:1.5px solid var(--line);color:var(--text);
+    flex-shrink:0;
+  }
+  .ball.star{background:var(--teal);border-color:var(--teal);color:#fff;}
+  :root:not([data-theme="light"]) .ball.star{color:#0c1512;}
+  :root[data-theme="dark"] .ball.star{color:#0c1512;}
+  .ball.bonus{background:var(--brass);border-color:var(--brass);color:#fff;}
+  :root:not([data-theme="light"]) .ball.bonus{color:#241a04;}
+  :root[data-theme="dark"] .ball.bonus{color:#241a04;}
+
+  .gen-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  button.primary{
+    background:var(--teal);color:#fff;border:none;border-radius:10px;padding:11px 20px;
+    font-family:'Inter';font-weight:600;font-size:.9rem;cursor:pointer;
+  }
+  :root:not([data-theme="light"]) button.primary{color:#0c1512;}
+  :root[data-theme="dark"] button.primary{color:#0c1512;}
+  button.ghost{
+    background:transparent;color:var(--text-dim);border:1px solid var(--line);border-radius:10px;
+    padding:11px 16px;font-family:'Inter';font-size:.85rem;cursor:pointer;
+  }
+
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
+  .stat-tile{background:var(--surface-2);border-radius:12px;padding:14px;}
+  .stat-tile .k{font-size:1.4rem;font-family:'Fraunces';color:var(--brass-strong);}
+  .stat-tile .l{font-size:.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
+
+  .verdict{
+    display:flex;gap:12px;padding:14px 16px;border-radius:12px;background:var(--surface-2);
+    border-left:3px solid var(--teal);font-size:.88rem;color:var(--text);margin-bottom:4px;
+  }
+  .verdict b{color:var(--teal-strong);}
+
+  .chart-wrap{overflow-x:auto;padding-bottom:4px;}
+  .chart{display:flex;align-items:flex-end;gap:3px;height:150px;min-width:560px;}
+  .bar{flex:1;background:var(--surface-2);border-radius:3px 3px 0 0;position:relative;min-width:6px;}
+  .bar.hot{background:var(--brass);}
+  .bar.cold{background:var(--teal);opacity:.55;}
+  .chart-labels{display:flex;justify-content:space-between;font-size:.68rem;color:var(--text-dim);min-width:560px;margin-top:4px;}
+
+  .freq-legend{display:flex;gap:16px;font-size:.76rem;color:var(--text-dim);margin-top:10px;}
+  .freq-legend span{display:flex;align-items:center;gap:6px;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+  .checker-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .checker-row input[type=text]{
+    flex:1;min-width:220px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--text);font-family:'IBM Plex Mono';font-size:.9rem;
+  }
+  select{
+    padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);
+    color:var(--text);font-family:'Inter';font-size:.85rem;
+  }
+  .check-result{padding:12px 14px;border-radius:10px;background:var(--surface-2);font-size:.88rem;display:none;}
+  .check-result.show{display:block;}
+
+  footer{color:var(--text-dim);font-size:.78rem;text-align:center;margin-top:28px;line-height:1.7;}
+  footer a{color:var(--teal-strong);}
+
+  .circle-form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+  .circle-form input[type=text]{
+    flex:2;min-width:160px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--text);font-family:'Inter';font-size:.88rem;
+  }
+  .circle-form input[type=number]{
+    flex:1;min-width:100px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--text);font-family:'IBM Plex Mono';font-size:.88rem;
+  }
+  .circle-list{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+  .circle-card{
+    display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:12px;
+    background:var(--surface-2);border:1px solid var(--line);flex-wrap:wrap;
+  }
+  .circle-card .cinfo{flex:1;min-width:120px;}
+  .circle-card .cname{font-family:'Fraunces';font-weight:600;font-size:.98rem;}
+  .circle-card .cmeta{color:var(--text-dim);font-size:.76rem;margin-top:2px;}
+  .circle-empty{color:var(--text-dim);font-size:.85rem;padding:10px 2px;}
+  button.join{
+    background:transparent;border:1px solid var(--teal);color:var(--teal-strong);
+    border-radius:8px;padding:8px 14px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:'Inter';
+  }
+  button.join.joined{background:var(--teal);color:#fff;border-color:var(--teal);}
+  :root:not([data-theme="light"]) button.join.joined{color:#0c1512;}
+  :root[data-theme="dark"] button.join.joined{color:#0c1512;}
+
+  .predict-target{
+    display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;
+    background:var(--surface-2);color:var(--text-dim);font-size:.82rem;margin-bottom:12px;
+  }
+  .predict-target b{color:var(--text);font-family:'IBM Plex Mono';}
+  .result-entry{
+    margin-top:16px;padding-top:14px;border-top:1px dashed var(--line);
+  }
+  .leaderboard{display:flex;flex-direction:column;gap:8px;}
+  .lb-row{
+    display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;
+    background:var(--surface-2);font-size:.86rem;
+  }
+  .lb-row .lb-rank{width:22px;color:var(--text-dim);font-family:'IBM Plex Mono';}
+  .lb-row .lb-name{flex:1;font-weight:500;}
+  .lb-row .lb-stat{color:var(--text-dim);font-size:.78rem;text-align:right;}
+  .lb-row .lb-stat b{color:var(--brass-strong);font-family:'IBM Plex Mono';}
+
+  .quiz-banner{
+    padding:12px 14px;border-radius:12px;background:var(--surface-2);border-left:3px solid var(--red);
+    color:var(--text-dim);font-size:.82rem;margin-bottom:16px;
+  }
+  .quiz-questions{display:flex;flex-direction:column;gap:16px;}
+  .quiz-q{display:flex;flex-direction:column;gap:8px;}
+  .quiz-q .qtext{font-size:.9rem;}
+  .quiz-scale{display:flex;gap:6px;flex-wrap:wrap;}
+  .quiz-opt{
+    flex:1;min-width:64px;text-align:center;padding:8px 6px;border-radius:8px;border:1px solid var(--line);
+    background:var(--surface-2);font-size:.74rem;color:var(--text-dim);cursor:pointer;user-select:none;
+  }
+  .quiz-opt.selected{background:var(--teal);border-color:var(--teal);color:#fff;}
+  :root:not([data-theme="light"]) .quiz-opt.selected{color:#0c1512;}
+  :root[data-theme="dark"] .quiz-opt.selected{color:#0c1512;}
+  .quiz-result{
+    margin-top:18px;padding:16px;border-radius:12px;background:var(--surface-2);
+    border-left:3px solid var(--brass);
+  }
+  .quiz-result .qtitle{font-family:'Fraunces';font-weight:600;font-size:1.1rem;color:var(--brass-strong);margin-bottom:6px;}
+  .quiz-result .qnote{font-size:.8rem;color:var(--text-dim);margin-top:10px;}
+  .quiz-history{display:flex;flex-direction:column;gap:6px;}
+  .qh-row{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:8px;background:var(--surface-2);font-size:.82rem;}
+  .qh-row .qh-title{font-weight:600;}
+  .qh-row .qh-meta{color:var(--text-dim);font-size:.76rem;}
+
+  @media (max-width:480px){
+    .game-tabs{flex-direction:column;}
+    header.top{flex-direction:column;align-items:flex-start;}
+    .auth-bar{justify-content:flex-start;}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <h1>Draw Room</h1>
+    <p>Real UK Lotto &amp; EuroMillions history, honest odds, no fake predictions.</p>
+  </div>
+  <button class="theme-btn" id="themeBtn" type="button">Dark mode</button>
+</header>
+
+<div class="auth-bar" id="authBar"></div>
+
+<div class="game-tabs">
+  <button class="game-tab active" id="tabLotto" type="button">
+    <strong>UK Lotto</strong>
+    <span>6 from 59 · £2/line</span>
+  </button>
+  <button class="game-tab" id="tabEuro" type="button">
+    <strong>EuroMillions</strong>
+    <span>5 from 50 + 2 stars from 12</span>
+  </button>
+</div>
+
+<section id="generatorSection">
+  <h2>Line generator</h2>
+  <div class="sub" id="genSub">Pick a style, then generate. None of these improve your odds — see why below.</div>
+
+  <div class="mode-row" id="modeRow">
+    <button class="mode-btn active" data-mode="dip">Lucky dip</button>
+    <button class="mode-btn" data-mode="hot">Hot numbers</button>
+    <button class="mode-btn" data-mode="cold">Cold numbers</button>
+    <button class="mode-btn" data-mode="balanced">Balanced spread</button>
+  </div>
+
+  <label class="toggle-row">
+    <input type="checkbox" id="neverDrawnToggle" checked>
+    Skip any combination that has already been drawn (harmless, doesn't change your odds)
+  </label>
+
+  <div class="lines" id="linesOut"></div>
+
+  <div class="gen-actions">
+    <button class="primary" id="genBtn" type="button">Generate a line</button>
+    <button class="ghost" id="genFiveBtn" type="button">Generate 5 lines</button>
+    <button class="ghost" id="clearBtn" type="button">Clear</button>
+  </div>
+</section>
+
+<section>
+  <h2>What the numbers actually say</h2>
+  <div class="sub" id="statsSub">Computed from real official draw history — not a sample, the whole record.</div>
+
+  <div class="stat-grid" id="statGrid"></div>
+
+  <div class="verdict" id="verdictBox"></div>
+</section>
+
+<section>
+  <h2>Number frequency</h2>
+  <div class="sub">How many times each ball has been drawn, across the full history below.</div>
+  <div class="chart-wrap">
+    <div class="chart" id="freqChart"></div>
+    <div class="chart-labels" id="freqLabels"></div>
+  </div>
+  <div class="freq-legend">
+    <span><i class="dot" style="background:var(--brass)"></i> 5 most-drawn</span>
+    <span><i class="dot" style="background:var(--teal);opacity:.55"></i> 5 least-drawn</span>
+  </div>
+</section>
+
+<section>
+  <h2>Ticket checker</h2>
+  <div class="sub">Enter your numbers and compare against any past draw.</div>
+  <div class="checker-row">
+    <input type="text" id="checkInput" placeholder="e.g. 3, 17, 22, 34, 41, 59">
+    <select id="checkDraw"></select>
+    <button class="primary" id="checkBtn" type="button">Check</button>
+  </div>
+  <div class="check-result" id="checkResult"></div>
+</section>
+
+<section>
+  <h2>Focus Circles</h2>
+  <div class="sub">A shared number your group rallies around for draw night. Purely social — <b>it does not change anyone's odds.</b> Every number stays exactly <span id="circleOddsNote" class="num"></span>, whether zero people or ten thousand people are "focused" on it.</div>
+
+  <div class="circle-form">
+    <input type="text" id="circleName" placeholder="Circle name (e.g. Flat 4B)" maxlength="40">
+    <input type="number" id="circleNumber" placeholder="Focus number" min="1">
+    <button class="primary" id="circleCreateBtn" type="button">Start a circle</button>
+  </div>
+  <div class="sub" id="circleStatus" style="margin-top:-4px;"></div>
+
+  <div id="circleList" class="circle-list"></div>
+</section>
+
+<section>
+  <h2>Prediction Test</h2>
+  <div class="sub">A real, falsifiable test — if anyone has a knack, this is where it would show up. Lock in numbers before a draw; once the real result is in, everyone's hit-rate is measured against what pure chance predicts.</div>
+
+  <div class="predict-target" id="predictTarget"></div>
+
+  <div class="checker-row">
+    <input type="text" id="predictInput" placeholder="Your prediction, e.g. 3, 17, 22, 34, 41, 59">
+    <button class="primary" id="predictBtn" type="button">Lock it in</button>
+  </div>
+  <div class="sub" id="predictStatus" style="margin-top:-4px;"></div>
+
+  <div id="resultEntry" class="result-entry" hidden>
+    <h3 style="font-size:.95rem;margin-bottom:8px;">Enter the actual result (editor only)</h3>
+    <div class="checker-row">
+      <input type="date" id="resultDate">
+      <input type="text" id="resultInput" placeholder="Actual numbers drawn">
+      <button class="ghost" id="resultBtn" type="button">Save result</button>
+    </div>
+    <div class="sub" id="resultStatus" style="margin-top:-4px;"></div>
+  </div>
+
+  <h3 style="font-size:.95rem;margin:18px 0 8px;">Leaderboard</h3>
+  <div id="leaderboard" class="leaderboard"></div>
+</section>
+
+<section>
+  <h2>Intuition Quiz</h2>
+  <div class="quiz-banner">Just for fun. This doesn't measure anything real, isn't scored against outcomes, and has no effect on the Prediction Test, Focus Circles, or anyone's actual odds — it's a personality quiz, not a diagnosis. If you're signed in, your own results are saved to <b>your own private history</b> below, visible only to you — never shown to anyone else, never aggregated into a leaderboard or ranking.</div>
+
+  <div id="quizQuestions" class="quiz-questions"></div>
+
+  <div class="gen-actions" style="margin-top:14px;">
+    <button class="primary" id="quizBtn" type="button">See my result</button>
+    <button class="ghost" id="quizResetBtn" type="button">Reset</button>
+  </div>
+
+  <div id="quizResult" class="quiz-result" hidden></div>
+
+  <h3 style="font-size:.95rem;margin:18px 0 8px;">Your quiz history</h3>
+  <div class="sub" style="margin-top:-6px;">Private to you. Nobody else who opens this app can see this list.</div>
+  <div id="quizHistory" class="quiz-history"></div>
+</section>
+
+<footer>
+  <span id="rangeText"></span><br>
+  UK Lotto figures use the current 6/59 format (introduced Oct 2015); EuroMillions Lucky Star stats use the stable 1–12 era (since Sep 2016) so an old rule change doesn't masquerade as a pattern.<br>
+  Every draw is independent — this tool is for picking lines you like, not for predicting winners.
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+(async function(){
+  // ---- Supabase client (replaces the claude.use('db')/('user') Artifact capabilities) ----
+  const SUPABASE_URL = 'https://talubhstvuqluwaztllv.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRhbHViaHN0dnVxbHV3YXp0bGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwODQ0MjMsImV4cCI6MjEwNjY2MDQyM30.o7_p_tcP_QVto8yg35IvTjKJvc8tQK2TBdVxp1Y3-zA';
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let session = null;
+  let myId = null;
+  let canEditPage = false; // profiles.is_admin
+  const profileCache = new Map(); // userId -> {name, avatarUrl}
+
+  async function refreshProfile(){
+    canEditPage = false;
+    if(!myId) return;
+    try{
+      const { data } = await supa.from('profiles').select('is_admin,display_name').eq('id', myId).maybeSingle();
+      canEditPage = !!(data && data.is_admin);
+    }catch(e){}
+  }
+
+  async function profilesFor(ids){
+    const unique = Array.from(new Set(ids.filter(Boolean)));
+    const missing = unique.filter(id=>!profileCache.has(id));
+    if(missing.length){
+      try{
+        const { data } = await supa.from('profiles').select('id,display_name').in('id', missing);
+        (data||[]).forEach(row=>{
+          profileCache.set(row.id, { name: row.display_name || '', avatarUrl: '' });
+        });
+      }catch(e){}
+      missing.forEach(id=>{ if(!profileCache.has(id)) profileCache.set(id, {name:'', avatarUrl:''}); });
+    }
+    const out = {};
+    unique.forEach(id=> out[id] = profileCache.get(id) || {name:'', avatarUrl:''});
+    return out;
+  }
+
+  // ---- Auth bar ----
+  const authBar = document.getElementById('authBar');
+  function renderAuthBar(){
+    authBar.innerHTML = '';
+    if(session && session.user){
+      const label = session.user.email || 'Signed in';
+      const chip = document.createElement('div');
+      chip.className = 'auth-chip';
+      chip.innerHTML = `<span></span>`;
+      chip.querySelector('span').textContent = label;
+      const out = document.createElement('button');
+      out.className = 'auth-btn'; out.type='button'; out.textContent='Sign out';
+      out.addEventListener('click', async ()=>{ await supa.auth.signOut(); });
+      authBar.appendChild(chip);
+      authBar.appendChild(out);
+    } else {
+      const input = document.createElement('input');
+      input.type = 'email'; input.placeholder = 'you@example.com'; input.id = 'authEmail';
+      const btn = document.createElement('button');
+      btn.className = 'auth-btn'; btn.type = 'button'; btn.textContent = 'Email me a sign-in link';
+      const status = document.createElement('span');
+      status.style.fontSize = '.78rem';
+      btn.addEventListener('click', async ()=>{
+        const email = input.value.trim();
+        if(!email){ status.textContent = 'Enter an email first.'; return; }
+        status.textContent = 'Sending…';
+        try{
+          const { error } = await supa.auth.signInWithOtp({ email, options:{ emailRedirectTo: window.location.href } });
+          status.textContent = error ? 'Could not send that right now.' : 'Check your email for a link.';
+        }catch(e){ status.textContent = 'Could not send that right now.'; }
+      });
+      authBar.appendChild(input);
+      authBar.appendChild(btn);
+      authBar.appendChild(status);
+    }
+  }
+  renderAuthBar();
+
+  supa.auth.getSession().then(({data})=>{ session = data.session; myId = session?.user?.id || null; onAuthReady(); });
+  supa.auth.onAuthStateChange((_event, newSession)=>{
+    session = newSession; myId = session?.user?.id || null;
+    renderAuthBar();
+    refreshProfile().then(()=>{
+      subscribeCircles(current);
+      subscribePredictions(current);
+      subscribeQuizHistory();
+    });
+  });
+
+  function onAuthReady(){
+    renderAuthBar();
+    refreshProfile();
+  }
+
+  // ---- Draw data ----
+  const res = await fetch('draws.json');
+  const DATA = await res.json();
+
+  const GAMES = {
+    lotto: {
+      label: 'UK Lotto', mainCount:6, mainMax:59,
+      hasStar:false, hasBonus:true, bonusMax:59,
+      rows: DATA.lotto.map(r=>({date:r[0], main:r.slice(1,7), bonus:r[7]})),
+      cost:'£2', jackpotOdds: '1 in 45,057,474'
+    },
+    euro: {
+      label: 'EuroMillions', mainCount:5, mainMax:50,
+      hasStar:true, starCount:2, starMax:12,
+      rows: DATA.euro.map(r=>({date:r[0], main:r.slice(1,6), stars:r.slice(6,8)})),
+      cost:'£2.50', jackpotOdds:'1 in 139,838,160'
+    }
+  };
+  // EuroMillions stars: restrict frequency stats to stable era (>=2016-09-27)
+  GAMES.euro.starRows = GAMES.euro.rows.filter(r=>r.date>='2016-09-27');
+
+  let current = 'lotto';
+  let theme = 'system';
+
+  const $ = s=>document.querySelector(s);
+  const themeBtn = $('#themeBtn');
+  themeBtn.addEventListener('click', ()=>{
+    theme = theme==='dark' ? 'light' : (theme==='light' ? 'system' : 'dark');
+    if(theme==='system'){ document.documentElement.removeAttribute('data-theme'); themeBtn.textContent='Dark mode'; }
+    else { document.documentElement.setAttribute('data-theme', theme); themeBtn.textContent = theme==='dark' ? 'Light mode' : 'System theme'; }
+  });
+
+  function freqCount(rows, field, max){
+    const counts = new Array(max+1).fill(0);
+    rows.forEach(r=> r[field].forEach(n=> counts[n]++));
+    return counts;
+  }
+
+  function chiSquare(counts, max, expected){
+    let chi=0;
+    for(let i=1;i<=max;i++){ const d=counts[i]-expected; chi += d*d/expected; }
+    return chi;
+  }
+  // rough chi-square p-value via Wilson-Hilferty approx (good enough for display)
+  function chiToP(chi, df){
+    const z = Math.pow(chi/df,1/3) - (1 - 2/(9*df));
+    const zsig = Math.sqrt(2/(9*df));
+    const zz = z/zsig;
+    // upper tail normal approx
+    const p = 0.5*erfc(zz/Math.SQRT2);
+    return Math.max(0, Math.min(1,p));
+  }
+  function erfc(x){
+    const t = 1/(1+0.3275911*Math.abs(x));
+    const y = 1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);
+    const r = x>=0? y : 2-y;
+    return r;
+  }
+
+  function existingCombos(rows){
+    const set = new Set();
+    rows.forEach(r=> set.add(r.main.slice().sort((a,b)=>a-b).join(',')));
+    return set;
+  }
+
+  function randSample(max, count){
+    const pool = [];
+    for(let i=1;i<=max;i++) pool.push(i);
+    for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+    return pool.slice(0,count).sort((a,b)=>a-b);
+  }
+
+  function weightedSample(counts, max, count, favorHigh){
+    const maxCount = Math.max(...counts.slice(1,max+1));
+    const weights = [];
+    for(let i=1;i<=max;i++){
+      const c = counts[i];
+      const w = favorHigh ? (c+1) : (maxCount - c + 2);
+      weights.push({n:i, w});
+    }
+    const chosen = new Set();
+    let attempts=0;
+    while(chosen.size<count && attempts<3000){
+      attempts++;
+      const total = weights.filter(x=>!chosen.has(x.n)).reduce((a,b)=>a+b.w,0);
+      let r = Math.random()*total;
+      for(const x of weights){
+        if(chosen.has(x.n)) continue;
+        r -= x.w;
+        if(r<=0){ chosen.add(x.n); break; }
+      }
+    }
+    return Array.from(chosen).sort((a,b)=>a-b);
+  }
+
+  function balancedSample(max, count){
+    const bandSize = max/count;
+    const chosen = [];
+    for(let i=0;i<count;i++){
+      const lo = Math.floor(i*bandSize)+1;
+      const hi = Math.floor((i+1)*bandSize);
+      const n = lo + Math.floor(Math.random()*(hi-lo+1));
+      chosen.push(n);
+    }
+    return Array.from(new Set(chosen)).sort((a,b)=>a-b).length===count
+      ? chosen.sort((a,b)=>a-b)
+      : randSample(max,count);
+  }
+
+  function generateLine(gameKey, mode, avoidExisting){
+    const game = GAMES[gameKey];
+    const mainCounts = freqCount(game.rows, 'main', game.mainMax);
+    const combos = avoidExisting ? existingCombos(game.rows) : null;
+
+    let main, tries=0;
+    do{
+      tries++;
+      if(mode==='dip') main = randSample(game.mainMax, game.mainCount);
+      else if(mode==='hot') main = weightedSample(mainCounts, game.mainMax, game.mainCount, true);
+      else if(mode==='cold') main = weightedSample(mainCounts, game.mainMax, game.mainCount, false);
+      else main = balancedSample(game.mainMax, game.mainCount);
+    } while(combos && combos.has(main.join(',')) && tries<200);
+
+    const line = {main};
+    if(game.hasStar){
+      const starRows = game.starRows;
+      const starCounts = freqCount(starRows, 'stars', game.starMax);
+      let stars;
+      if(mode==='dip') stars = randSample(game.starMax, game.starCount);
+      else if(mode==='hot') stars = weightedSample(starCounts, game.starMax, game.starCount, true);
+      else if(mode==='cold') stars = weightedSample(starCounts, game.starMax, game.starCount, false);
+      else stars = randSample(game.starMax, game.starCount);
+      line.stars = stars;
+    }
+    if(game.hasBonus){
+      line.bonus = null;
+    }
+    return line;
+  }
+
+  function renderLine(line, game){
+    const div = document.createElement('div');
+    div.className='line';
+    line.main.forEach(n=>{
+      const b=document.createElement('div'); b.className='ball'; b.textContent=n; div.appendChild(b);
+    });
+    if(line.stars) line.stars.forEach(n=>{
+      const b=document.createElement('div'); b.className='ball star'; b.textContent=n; div.appendChild(b);
+    });
+    return div;
+  }
+
+  let currentMode='dip', avoidExisting=true;
+  const linesOut = $('#linesOut');
+
+  function doGenerate(n){
+    linesOut.innerHTML='';
+    for(let i=0;i<n;i++){
+      const line = generateLine(current, currentMode, avoidExisting);
+      linesOut.appendChild(renderLine(line, GAMES[current]));
+    }
+  }
+
+  $('#genBtn').addEventListener('click', ()=>doGenerate(1));
+  $('#genFiveBtn').addEventListener('click', ()=>doGenerate(5));
+  $('#clearBtn').addEventListener('click', ()=>linesOut.innerHTML='');
+  $('#neverDrawnToggle').addEventListener('change', e=>{ avoidExisting = e.target.checked; });
+
+  document.querySelectorAll('.mode-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentMode = btn.dataset.mode;
+    });
+  });
+
+  function renderStats(){
+    const game = GAMES[current];
+    const mainCounts = freqCount(game.rows, 'main', game.mainMax);
+    const expected = game.rows.length * game.mainCount / game.mainMax;
+    let chi2=0;
+    for(let i=1;i<=game.mainMax;i++){ const d=mainCounts[i]-expected; chi2+=d*d/expected; }
+    const df = game.mainMax-1;
+    const p = chiToP(chi2, df);
+
+    const grid = $('#statGrid'); grid.innerHTML='';
+    const tiles = [
+      [game.rows.length.toLocaleString(), 'draws analysed'],
+      [game.rows[0].date+' → '+game.rows[game.rows.length-1].date, 'date range'],
+      ['p = '+p.toFixed(2), 'chi-square test, main numbers'],
+      [game.jackpotOdds, 'odds of jackpot, any single line']
+    ];
+    tiles.forEach(([k,l])=>{
+      const d=document.createElement('div'); d.className='stat-tile';
+      d.innerHTML=`<div class="k num">${k}</div><div class="l">${l}</div>`;
+      grid.appendChild(d);
+    });
+
+    const verdict = $('#verdictBox');
+    const significant = p < 0.01;
+    verdict.innerHTML = significant
+      ? `<div>⚠ <b>Borderline signal detected</b> (p=${p.toFixed(3)}) — still almost certainly noise from testing many numbers at once, not a real bias. Regulated draw machines are audited specifically to prevent exploitable mechanical bias, unlike some physical casino roulette wheels.</div>`
+      : `<div><b>No statistically real pattern.</b> p=${p.toFixed(2)} means the frequency spread is exactly what you'd expect from a fair, random draw. Every number is equally likely on the next draw regardless of its past history.</div>`;
+
+    $('#rangeText').textContent = `${game.label}: ${game.rows.length.toLocaleString()} draws, ${game.rows[0].date} to ${game.rows[game.rows.length-1].date}.`;
+
+    const chart = $('#freqChart'); chart.innerHTML='';
+    const labels = $('#freqLabels'); labels.innerHTML='';
+    const maxC = Math.max(...mainCounts.slice(1));
+    const sorted = [...mainCounts.keys()].slice(1).sort((a,b)=>mainCounts[b]-mainCounts[a]);
+    const top5 = new Set(sorted.slice(0,5));
+    const bottom5 = new Set(sorted.slice(-5));
+    for(let i=1;i<=game.mainMax;i++){
+      const bar = document.createElement('div');
+      bar.className='bar' + (top5.has(i)?' hot':'') + (bottom5.has(i)?' cold':'');
+      bar.style.height = Math.max(4,(mainCounts[i]/maxC*140))+'px';
+      bar.title = `Number ${i}: drawn ${mainCounts[i]} times`;
+      chart.appendChild(bar);
+    }
+    [1, Math.round(game.mainMax/4), Math.round(game.mainMax/2), Math.round(game.mainMax*3/4), game.mainMax].forEach(n=>{
+      const s=document.createElement('span'); s.textContent=n; labels.appendChild(s);
+    });
+  }
+
+  function populateChecker(){
+    const game = GAMES[current];
+    const sel = $('#checkDraw');
+    sel.innerHTML='';
+    const optLatest = document.createElement('option'); optLatest.value='latest'; optLatest.textContent='Most recent draw ('+game.rows[game.rows.length-1].date+')';
+    sel.appendChild(optLatest);
+    const recent = game.rows.slice(-20).reverse();
+    recent.forEach(r=>{
+      const o=document.createElement('option'); o.value=r.date; o.textContent=r.date;
+      sel.appendChild(o);
+    });
+  }
+
+  $('#checkBtn').addEventListener('click', ()=>{
+    const game = GAMES[current];
+    const raw = $('#checkInput').value.trim();
+    const result = $('#checkResult');
+    if(!raw){ result.classList.remove('show'); return; }
+    const nums = raw.split(/[,\s]+/).map(x=>parseInt(x,10)).filter(n=>!isNaN(n));
+    const sel = $('#checkDraw').value;
+    const draw = sel==='latest' ? game.rows[game.rows.length-1] : game.rows.find(r=>r.date===sel);
+    if(!draw){ result.textContent='Draw not found.'; result.classList.add('show'); return; }
+    const matched = nums.filter(n=>draw.main.includes(n));
+    let bonusMsg='';
+    if(game.hasBonus && nums.includes(draw.bonus)) bonusMsg = ` Bonus ball ${draw.bonus} also matched.`;
+    let starMsg='';
+    if(game.hasStar){
+      const starMatch = nums.filter(n=>draw.stars.includes(n));
+      starMsg = ` Stars matched: ${starMatch.length} (${starMatch.join(', ')||'none'}).`;
+    }
+    result.innerHTML = `Draw ${draw.date}: <span class="num">${draw.main.join(', ')}</span>${game.hasBonus?' bonus '+draw.bonus:''}${game.hasStar?' + stars '+draw.stars.join(', '):''}<br>
+      You matched <b>${matched.length} of ${game.mainCount}</b> main numbers (${matched.join(', ')||'none'}).${bonusMsg}${starMsg}`;
+    result.classList.add('show');
+  });
+
+  // ---- Focus Circles: social-only, backed by Supabase `circles` + `circle_members` ----
+  // No mechanism here changes draw odds. This exists purely so a group
+  // can rally around a shared number for fun; it is labeled as such in
+  // the UI and nowhere claims otherwise.
+  let circleChannel = null;
+
+  async function loadCircles(gameKey){
+    const { data: circles, error } = await supa.from('circles').select('id,name,focus_number,created_by').eq('game', gameKey).limit(100);
+    if(error) return null;
+    const ids = (circles||[]).map(c=>c.id);
+    let membersByCircle = {};
+    if(ids.length){
+      const { data: members } = await supa.from('circle_members').select('circle_id,user_id').in('circle_id', ids);
+      (members||[]).forEach(m=>{
+        (membersByCircle[m.circle_id] = membersByCircle[m.circle_id] || []).push(m.user_id);
+      });
+    }
+    return (circles||[]).map(c=>({ id:c.id, name:c.name, focusNumber:c.focus_number, members: membersByCircle[c.id]||[] }));
+  }
+
+  async function renderCircles(docs){
+    const list = $('#circleList');
+    list.innerHTML='';
+    if(!docs || docs.length===0){
+      list.innerHTML = '<div class="circle-empty">No circles yet for this game — start one above.</div>';
+      return;
+    }
+    const allIds = new Set();
+    docs.forEach(d=> d.members.forEach(id=>allIds.add(id)));
+    const profiles = await profilesFor(Array.from(allIds));
+
+    docs.forEach(d=>{
+      const members = d.members;
+      const joined = myId && members.includes(myId);
+      const card = document.createElement('div');
+      card.className='circle-card';
+      card.innerHTML = `
+        <div class="ball" style="width:34px;height:34px;font-size:.82rem;">${d.focusNumber}</div>
+        <div class="cinfo">
+          <div class="cname"></div>
+          <div class="cmeta">${members.length} focused</div>
+        </div>
+        <button class="join ${joined?'joined':''}" data-id="${d.id}" data-joined="${joined?1:0}">${joined?'In this circle':'Join'}</button>
+      `;
+      card.querySelector('.cname').textContent = d.name;
+      list.appendChild(card);
+    });
+
+    list.querySelectorAll('button.join').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        if(!myId){ alert('Sign in to join a circle.'); return; }
+        const id = btn.dataset.id;
+        const alreadyJoined = btn.dataset.joined==='1';
+        try{
+          if(alreadyJoined){
+            await supa.from('circle_members').delete().eq('circle_id', id).eq('user_id', myId);
+          } else {
+            await supa.from('circle_members').insert({ circle_id:id, user_id:myId });
+          }
+          await refreshCircles(current);
+        }catch(e){ /* last-writer-wins race is fine for a social feature */ }
+      });
+    });
+  }
+
+  async function refreshCircles(gameKey){
+    const docs = await loadCircles(gameKey);
+    if(docs===null){ $('#circleList').innerHTML = '<div class="circle-empty">Circles are unavailable right now.</div>'; return; }
+    renderCircles(docs);
+  }
+
+  function subscribeCircles(gameKey){
+    if(circleChannel){ supa.removeChannel(circleChannel); circleChannel=null; }
+    $('#circleList').innerHTML = '<div class="circle-empty">Loading circles…</div>';
+    refreshCircles(gameKey);
+    circleChannel = supa.channel('circles-'+gameKey)
+      .on('postgres_changes', { event:'*', schema:'public', table:'circles' }, ()=> refreshCircles(gameKey))
+      .on('postgres_changes', { event:'*', schema:'public', table:'circle_members' }, ()=> refreshCircles(gameKey))
+      .subscribe();
+  }
+
+  $('#circleCreateBtn').addEventListener('click', async ()=>{
+    const status = $('#circleStatus');
+    if(!myId){ status.textContent='Sign in to start a circle.'; return; }
+    const name = $('#circleName').value.trim().slice(0,40);
+    const num = parseInt($('#circleNumber').value,10);
+    const game = GAMES[current];
+    if(!name){ status.textContent='Give your circle a name.'; return; }
+    if(isNaN(num) || num<1 || num>game.mainMax){ status.textContent=`Focus number must be between 1 and ${game.mainMax}.`; return; }
+    status.textContent='Starting…';
+    try{
+      const { data, error } = await supa.from('circles').insert({
+        name, focus_number:num, game:current, created_by: myId
+      }).select('id').single();
+      if(error) throw error;
+      await supa.from('circle_members').insert({ circle_id: data.id, user_id: myId });
+      $('#circleName').value=''; $('#circleNumber').value='';
+      status.textContent='Circle started. Purely for fun — it does not change the odds.';
+      await refreshCircles(current);
+    }catch(e){
+      status.textContent = 'Could not start a circle right now.';
+    }
+  });
+
+  // ---- Prediction Test: a real, falsifiable test against chance ----
+  // Predictions are locked before a draw; hit-rate is measured against
+  // the real result once entered. Nothing here presupposes an outcome —
+  // the leaderboard shows whatever the numbers actually show.
+  let predictChannel = null;
+
+  function nextDrawDate(gameKey){
+    const targetDows = gameKey==='lotto' ? [3,6] : [2,5];
+    const now = new Date();
+    for(let add=0; add<8; add++){
+      const d = new Date(now.getTime()+add*86400000);
+      if(targetDows.includes(d.getDay())){
+        return d.toISOString().slice(0,10);
+      }
+    }
+    return now.toISOString().slice(0,10);
+  }
+
+  function expectedHits(game){
+    return game.mainCount*game.mainCount/game.mainMax;
+  }
+
+  function parseNums(raw, game){
+    const nums = raw.split(/[,\s]+/).map(x=>parseInt(x,10)).filter(n=>!isNaN(n));
+    const unique = Array.from(new Set(nums));
+    if(unique.length!==game.mainCount) return null;
+    if(unique.some(n=>n<1||n>game.mainMax)) return null;
+    return unique.sort((a,b)=>a-b);
+  }
+
+  async function renderLeaderboard(gameKey, predRows, resultRows){
+    const board = $('#leaderboard');
+    const game = GAMES[gameKey];
+    const resultsByDate = {};
+    resultRows.forEach(r=> resultsByDate[r.target_date] = r);
+
+    const totals = {};
+    predRows.forEach(p=>{
+      const res = resultsByDate[p.target_date];
+      if(!res) return;
+      const hits = p.numbers.filter(n=>res.main.includes(n)).length;
+      if(!totals[p.user_id]) totals[p.user_id] = {hits:0, expected:0, n:0};
+      totals[p.user_id].hits += hits;
+      totals[p.user_id].expected += expectedHits(game);
+      totals[p.user_id].n += 1;
+    });
+
+    const rows = Object.entries(totals).map(([uid,t])=>({uid, ...t, ratio: t.expected>0 ? t.hits/t.expected : 0}));
+    rows.sort((a,b)=>b.ratio-a.ratio || b.n-a.n);
+
+    board.innerHTML='';
+    if(rows.length===0){
+      board.innerHTML = '<div class="circle-empty">No scored predictions yet — lock one in, then add the real result once it\'s drawn.</div>';
+      return;
+    }
+    const profiles = await profilesFor(rows.map(r=>r.uid));
+    rows.forEach((r,i)=>{
+      const name = (profiles[r.uid]&&profiles[r.uid].name) || 'Someone';
+      const row = document.createElement('div');
+      row.className='lb-row';
+      row.innerHTML = `<span class="lb-rank">#${i+1}</span><span class="lb-name"></span>
+        <span class="lb-stat">Actual: <b>${r.hits}</b> · Expected by chance: <b>${r.expected.toFixed(1)}</b> · over ${r.n} draw${r.n===1?'':'s'}</span>`;
+      row.querySelector('.lb-name').textContent = name;
+      board.appendChild(row);
+    });
+  }
+
+  async function refreshPredictions(gameKey){
+    const [{ data: preds }, { data: results }] = await Promise.all([
+      supa.from('predictions').select('user_id,target_date,numbers').eq('game', gameKey).limit(500),
+      supa.from('results').select('target_date,main').eq('game', gameKey).limit(200)
+    ]);
+    renderLeaderboard(gameKey, preds||[], results||[]);
+  }
+
+  function subscribePredictions(gameKey){
+    if(predictChannel){ supa.removeChannel(predictChannel); predictChannel=null; }
+
+    const target = nextDrawDate(gameKey);
+    $('#predictTarget').innerHTML = `Predicting for the next draw: <b>${target}</b>`;
+
+    refreshPredictions(gameKey);
+    predictChannel = supa.channel('predictions-'+gameKey)
+      .on('postgres_changes', { event:'*', schema:'public', table:'predictions' }, ()=> refreshPredictions(gameKey))
+      .on('postgres_changes', { event:'*', schema:'public', table:'results' }, ()=> refreshPredictions(gameKey))
+      .subscribe();
+
+    $('#resultEntry').hidden = !canEditPage;
+    if(canEditPage) $('#resultDate').value = target;
+  }
+
+  $('#predictBtn').addEventListener('click', async ()=>{
+    const status = $('#predictStatus');
+    const game = GAMES[current];
+    if(!myId){ status.textContent='Sign in to lock in a prediction.'; return; }
+    const nums = parseNums($('#predictInput').value, game);
+    if(!nums){ status.textContent = `Enter exactly ${game.mainCount} distinct numbers between 1 and ${game.mainMax}.`; return; }
+    const target = nextDrawDate(current);
+    try{
+      const { error } = await supa.from('predictions').upsert({
+        user_id: myId, game: current, target_date: target, numbers: nums
+      }, { onConflict: 'user_id,game,target_date' });
+      if(error) throw error;
+      status.textContent = `Locked in for ${target}. Resubmitting before the draw overwrites it.`;
+    }catch(e){ status.textContent = 'Could not lock that in right now.'; }
+  });
+
+  $('#resultBtn').addEventListener('click', async ()=>{
+    const status = $('#resultStatus');
+    const game = GAMES[current];
+    const date = $('#resultDate').value;
+    const nums = parseNums($('#resultInput').value, game);
+    if(!date){ status.textContent='Pick the draw date.'; return; }
+    if(!nums){ status.textContent = `Enter exactly ${game.mainCount} distinct numbers between 1 and ${game.mainMax}.`; return; }
+    try{
+      const { error } = await supa.from('results').upsert({
+        game: current, target_date: date, main: nums, entered_by: myId
+      }, { onConflict: 'game,target_date' });
+      if(error) throw error;
+      status.textContent = 'Result saved — leaderboard updated.';
+      $('#resultInput').value='';
+    }catch(e){ status.textContent = 'Could not save that result (editor access required).'; }
+  });
+
+  function switchGame(key){
+    current = key;
+    $('#tabLotto').classList.toggle('active', key==='lotto');
+    $('#tabEuro').classList.toggle('active', key==='euro');
+    linesOut.innerHTML='';
+    renderStats();
+    populateChecker();
+    $('#checkResult').classList.remove('show');
+    $('#checkInput').value='';
+    $('#circleOddsNote').textContent = GAMES[key].jackpotOdds;
+    subscribeCircles(key);
+    subscribePredictions(key);
+  }
+  $('#tabLotto').addEventListener('click', ()=>switchGame('lotto'));
+  $('#tabEuro').addEventListener('click', ()=>switchGame('euro'));
+
+  switchGame('lotto');
+
+  // ---- Intuition Quiz: entertainment only ----
+  // Self-report cannot measure real predictive accuracy (see Prediction
+  // Test for the honest version of that). This never touches odds,
+  // circles, predictions, or the database beyond the viewer's own
+  // strictly-private row — it's for fun, nothing more.
+  const QUIZ_QUESTIONS = [
+    "I sometimes know who's calling before I check my phone.",
+    "I've had a dream that felt like it came true later.",
+    "I trust my gut instinct over careful analysis.",
+    "I notice patterns other people seem to miss.",
+    "I've had a strong feeling something was about to happen, and it did.",
+    "I consider myself a lucky person.",
+    "I sometimes think of a song right before it plays.",
+    "I get a 'vibe' about people within seconds of meeting them."
+  ];
+  const QUIZ_LABELS = [1,2,3,4,5];
+  const quizAnswers = new Array(QUIZ_QUESTIONS.length).fill(null);
+
+  const qWrap = $('#quizQuestions');
+  QUIZ_QUESTIONS.forEach((q, qi)=>{
+    const row = document.createElement('div');
+    row.className='quiz-q';
+    const scale = QUIZ_LABELS.map(v=>`<div class="quiz-opt" data-q="${qi}" data-v="${v}">${v===1?'Never':v===5?'Always':v}</div>`).join('');
+    row.innerHTML = `<div class="qtext"></div><div class="quiz-scale">${scale}</div>`;
+    row.querySelector('.qtext').textContent = q;
+    qWrap.appendChild(row);
+  });
+  qWrap.addEventListener('click', e=>{
+    const opt = e.target.closest('.quiz-opt');
+    if(!opt) return;
+    const qi = parseInt(opt.dataset.q,10), v = parseInt(opt.dataset.v,10);
+    quizAnswers[qi] = v;
+    qWrap.querySelectorAll(`.quiz-opt[data-q="${qi}"]`).forEach(o=>o.classList.toggle('selected', parseInt(o.dataset.v,10)===v));
+  });
+
+  const QUIZ_ARCHETYPES = [
+    { max:16, title:'The Skeptic', blurb:"You trust evidence over hunches — which, statistically, puts you in good company: the data agrees with you." },
+    { max:24, title:'The Curious', blurb:"You notice things but don't read too much into them. Healthy balance." },
+    { max:32, title:'The Dreamer', blurb:"You lean into intuition and pattern-seeing. Fun trait to have — still doesn't move lottery balls." },
+    { max:40, title:'The Full Mystic', blurb:"Maximum vibes. Enjoy the quiz result, but the odds on your next ticket are identical to everyone else's." }
+  ];
+
+  // Private per-viewer quiz history: Postgres RLS restricts quiz_history
+  // rows to user_id = auth.uid() only — even an admin account cannot read
+  // someone else's rows. Never aggregated, never surfaced on a leaderboard,
+  // never joined to Focus Circles or the Prediction Test.
+  function renderQuizHistoryRows(rows){
+    const box = $('#quizHistory');
+    box.innerHTML='';
+    if(!rows || rows.length===0){ box.innerHTML = '<div class="circle-empty">No results yet — take the quiz above.</div>'; return; }
+    rows.forEach(r=>{
+      const row = document.createElement('div');
+      row.className='qh-row';
+      row.innerHTML = `<span class="qh-title"></span><span class="qh-meta"></span>`;
+      row.querySelector('.qh-title').textContent = `${r.title} — ${r.total}/40`;
+      row.querySelector('.qh-meta').textContent = new Date(r.at).toLocaleDateString();
+      box.appendChild(row);
+    });
+  }
+
+  async function subscribeQuizHistory(){
+    const box = $('#quizHistory');
+    if(!myId){ box.innerHTML = '<div class="circle-empty">Sign in to keep a private history of your own results.</div>'; return; }
+    box.innerHTML = '<div class="circle-empty">Loading…</div>';
+    try{
+      const { data, error } = await supa.from('quiz_history').select('title,total,at').eq('user_id', myId).order('at', { ascending:false }).limit(10);
+      if(error) throw error;
+      renderQuizHistoryRows(data);
+    }catch(e){ box.innerHTML = '<div class="circle-empty">Could not load your history right now.</div>'; }
+  }
+  subscribeQuizHistory();
+
+  $('#quizBtn').addEventListener('click', async ()=>{
+    if(quizAnswers.some(a=>a===null)){ alert('Answer every question first — just for fun, but let\'s be thorough about it.'); return; }
+    const total = quizAnswers.reduce((a,b)=>a+b,0);
+    const archetype = QUIZ_ARCHETYPES.find(a=>total<=a.max) || QUIZ_ARCHETYPES[QUIZ_ARCHETYPES.length-1];
+    const result = $('#quizResult');
+    result.innerHTML = `
+      <div class="qtitle"></div>
+      <div class="qblurb"></div>
+      <div class="qnote">Score: ${total}/40 — a personality read, not a measurement. Saved only to your own private history if you're signed in; never shared, never aggregated, and it doesn't feed the Prediction Test or any circle. If you want a real test of whether your instincts beat chance, that's what the Prediction Test above is for.</div>
+    `;
+    result.querySelector('.qtitle').textContent = archetype.title;
+    result.querySelector('.qblurb').textContent = archetype.blurb;
+    result.hidden = false;
+
+    if(myId){
+      try{
+        await supa.from('quiz_history').insert({ user_id: myId, title: archetype.title, total, at: new Date().toISOString() });
+        subscribeQuizHistory();
+      }catch(e){ /* saving to your own history is best-effort, never blocks seeing the result */ }
+    }
+  });
+
+  $('#quizResetBtn').addEventListener('click', ()=>{
+    quizAnswers.fill(null);
+    qWrap.querySelectorAll('.quiz-opt').forEach(o=>o.classList.remove('selected'));
+    $('#quizResult').hidden = true;
+  });
+})();
+</script>
+</body>
+</html>

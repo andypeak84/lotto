@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Capacitor generated native projects (regenerate with: npx cap add android / ios)
+capacitor-app/android/
+capacitor-app/ios/
+
+# Build output
+*.apk
+*.aab
+*.ipa
+capacitor-app/www/build/
+
+# Vercel
+.vercel/
+
+# Gradle / Android Studio
+.gradle/
+local.properties
+*.iml
+.idea/
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Archive snapshot (regenerated, not source)
+draw-room-project.zip

@@ -1,0 +1,8 @@
+{
+  "appId": "com.drawroom.app",
+  "appName": "Draw Room",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
