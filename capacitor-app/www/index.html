@@ -274,7 +274,108 @@
   .qh-row .qh-title{font-weight:600;}
   .qh-row .qh-meta{color:var(--text-dim);font-size:.76rem;}
 
+  /* ---- Prediction Test picker ---- */
+  .pt-step{margin-bottom:18px;}
+  .pt-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);font-weight:600;margin-bottom:8px;}
+  .pt-hint{font-size:.78rem;color:var(--text-dim);margin-top:8px;}
+  .pt-h3{font-size:.95rem;margin:22px 0 8px;}
+  .seg{display:flex;gap:6px;padding:4px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line);}
+  .seg button{
+    flex:1;border:none;background:transparent;border-radius:10px;padding:10px 12px;cursor:pointer;
+    font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:.98rem;color:var(--text-dim);text-align:left;
+  }
+  .seg button small{display:block;font-family:'Inter';font-weight:400;font-size:.72rem;margin-top:1px;}
+  .seg button.active{background:var(--surface);color:var(--brass-strong);box-shadow:var(--shadow);}
+  .date-chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;}
+  .date-chip{
+    flex:none;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:66px;
+    padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);
+    color:var(--text);cursor:pointer;font-family:'Inter';position:relative;
+  }
+  .date-chip .dow{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);}
+  .date-chip .dd{font-family:'Fraunces';font-weight:600;font-size:1.25rem;line-height:1.1;}
+  .date-chip .mm{font-size:.72rem;color:var(--text-dim);}
+  .date-chip.active{border-color:var(--teal);background:var(--teal);color:#fff;}
+  .date-chip.active .dow,.date-chip.active .mm{color:inherit;opacity:.85;}
+  :root:not([data-theme="light"]) .date-chip.active{color:#0c1512;}
+  :root[data-theme="dark"] .date-chip.active{color:#0c1512;}
+  .date-chip .mine{position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--brass);}
+
+  .pt-ticket{
+    display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px;border-radius:14px;
+    background:var(--surface-2);margin-bottom:12px;min-height:62px;
+  }
+  .pt-ticket .plus{color:var(--text-dim);font-weight:600;margin:0 2px;}
+  .slot{
+    width:38px;height:38px;border-radius:50%;border:1.5px dashed var(--line);flex-shrink:0;
+    background:transparent;padding:0;cursor:default;
+  }
+  .slot.bonus-slot{border-color:var(--brass);opacity:.6;}
+  .slot.star-slot{border-color:var(--teal);opacity:.6;}
+  .pt-ticket .ball{cursor:pointer;border-width:1.5px;}
+  .pt-ticket .ball.main{background:var(--text);border-color:var(--text);color:var(--paper);}
+
+  .pick-tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+  .pick-tabs button{
+    padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;
+    color:var(--text-dim);font-family:'Inter';font-size:.8rem;font-weight:500;cursor:pointer;
+  }
+  .pick-tabs button .num{margin-left:4px;}
+  .pick-tabs button.active{background:var(--surface-2);color:var(--text);border-color:var(--text-dim);}
+  .pick-tabs button.full .num{color:var(--teal-strong);}
+
+  .pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:6px;}
+  .pick{
+    aspect-ratio:1;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);
+    color:var(--text);font-family:'IBM Plex Mono';font-weight:600;font-size:.86rem;cursor:pointer;padding:0;
+    display:flex;align-items:center;justify-content:center;transition:transform .08s, background .12s;
+    max-width:48px;justify-self:center;width:100%;
+  }
+  .pick:hover{border-color:var(--text-dim);}
+  .pick:active{transform:scale(.92);}
+  .pick.on{background:var(--text);border-color:var(--text);color:var(--paper);}
+  .pick.on.bonus{background:var(--brass);border-color:var(--brass);color:#fff;}
+  .pick.on.star{background:var(--teal);border-color:var(--teal);color:#fff;}
+  :root:not([data-theme="light"]) .pick.on.star{color:#0c1512;}
+  :root[data-theme="dark"] .pick.on.star{color:#0c1512;}
+  :root:not([data-theme="light"]) .pick.on.bonus{color:#241a04;}
+  :root[data-theme="dark"] .pick.on.bonus{color:#241a04;}
+  .pick.taken{opacity:.28;cursor:not-allowed;}
+  .pick-grid.star-grid{grid-template-columns:repeat(auto-fill,minmax(44px,1fr));}
+
+  .pt-status{font-size:.84rem;color:var(--text-dim);margin-top:10px;min-height:1.2em;}
+  .pt-status.ok{color:var(--teal-strong);}
+  .pt-status.err{color:var(--red);}
+
+  .pt-mine{display:flex;flex-direction:column;gap:8px;}
+  .pm-row{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;
+    background:var(--surface-2);
+  }
+  .pm-when{min-width:96px;}
+  .pm-when b{display:block;font-size:.86rem;}
+  .pm-when span{font-size:.72rem;color:var(--text-dim);}
+  .pm-balls{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:180px;}
+  .pm-balls .ball{width:28px;height:28px;font-size:.74rem;}
+  .pm-balls .ball.hit{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--teal);}
+  .pm-state{font-size:.76rem;color:var(--text-dim);text-align:right;}
+  .pm-state b{color:var(--text);}
+  .pm-actions{display:flex;gap:6px;}
+  .pm-actions button{
+    border:1px solid var(--line);background:var(--surface);color:var(--text-dim);border-radius:8px;
+    padding:5px 10px;font-size:.74rem;cursor:pointer;font-family:'Inter';
+  }
+
+  #resultEntry input[type=date]{
+    padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);
+    color:var(--text);font-family:'Inter';font-size:.85rem;color-scheme:light dark;
+  }
   @media (max-width:480px){
+    .seg button small{display:none;}
+    .pt-ticket{gap:5px;padding:10px;}
+    .pt-ticket .ball,.slot{width:31px;height:31px;font-size:.8rem;}
+    .pt-ticket .plus{margin:0;}
+    .pm-state{text-align:left;}
     .game-tabs{flex-direction:column;}
     header.top{flex-direction:column;align-items:flex-start;}
     .auth-bar{justify-content:flex-start;}
@@ -380,25 +481,52 @@
   <h2>Prediction Test</h2>
   <div class="sub">A real, falsifiable test — if anyone has a knack, this is where it would show up. Lock in numbers before a draw; once the real result is in, everyone's hit-rate is measured against what pure chance predicts.</div>
 
-  <div class="predict-target" id="predictTarget"></div>
-
-  <div class="checker-row">
-    <input type="text" id="predictInput" placeholder="Your prediction, e.g. 3, 17, 22, 34, 41, 59">
-    <button class="primary" id="predictBtn" type="button">Lock it in</button>
+  <div class="pt-step">
+    <div class="pt-label">Game</div>
+    <div class="seg" id="ptGame" role="tablist">
+      <button type="button" data-game="lotto" class="active" role="tab">UK Lotto<small>6 from 59 + bonus ball</small></button>
+      <button type="button" data-game="euro" role="tab">EuroMillions<small>5 from 50 + 2 Lucky Stars</small></button>
+    </div>
   </div>
-  <div class="sub" id="predictStatus" style="margin-top:-4px;"></div>
+
+  <div class="pt-step">
+    <div class="pt-label">Draw date</div>
+    <div class="date-chips" id="ptDates"></div>
+    <div class="pt-hint" id="ptDateHint"></div>
+  </div>
+
+  <div class="pt-step">
+    <div class="pt-label">Your numbers</div>
+    <div class="pt-ticket" id="ptTicket"></div>
+    <div class="pick-tabs" id="ptTabs">
+      <button type="button" data-pool="main" class="active">Main numbers <span class="num" id="ptMainCount">0/6</span></button>
+      <button type="button" data-pool="bonus"><span id="ptBonusName">Bonus ball</span> <span class="num" id="ptBonusCount">0/1</span></button>
+    </div>
+    <div class="pick-grid" id="ptGrid"></div>
+  </div>
+
+  <div class="gen-actions">
+    <button class="primary" id="predictBtn" type="button">Lock it in</button>
+    <button class="ghost" id="ptDipBtn" type="button">Lucky dip</button>
+    <button class="ghost" id="ptClearBtn" type="button">Clear</button>
+  </div>
+  <div class="pt-status" id="predictStatus" role="status"></div>
+
+  <h3 class="pt-h3">Your predictions</h3>
+  <div id="ptMine" class="pt-mine"></div>
 
   <div id="resultEntry" class="result-entry" hidden>
-    <h3 style="font-size:.95rem;margin-bottom:8px;">Enter the actual result (editor only)</h3>
+    <h3 style="font-size:.95rem;margin-bottom:8px;">Enter the actual result (editor only) — <span id="resultGameName"></span></h3>
     <div class="checker-row">
       <input type="date" id="resultDate">
-      <input type="text" id="resultInput" placeholder="Actual numbers drawn">
+      <input type="text" id="resultInput" placeholder="Main numbers drawn">
+      <input type="text" id="resultBonus" placeholder="Bonus ball" style="flex:0 1 140px;min-width:120px;">
       <button class="ghost" id="resultBtn" type="button">Save result</button>
     </div>
     <div class="sub" id="resultStatus" style="margin-top:-4px;"></div>
   </div>
 
-  <h3 style="font-size:.95rem;margin:18px 0 8px;">Leaderboard</h3>
+  <h3 class="pt-h3">Leaderboard — <span id="lbGameName">UK Lotto</span></h3>
   <div id="leaderboard" class="leaderboard"></div>
 </section>
 
@@ -531,7 +659,7 @@
     renderAuthBar();
     refreshProfile().then(()=>{
       subscribeCircles(current);
-      subscribePredictions(current);
+      try{ subscribePredictions(pt.game); }catch(e){}
       subscribeQuizHistory();
     });
   });
@@ -905,25 +1033,66 @@
   });
 
   // ---- Prediction Test: a real, falsifiable test against chance ----
-  // Predictions are locked before a draw; hit-rate is measured against
-  // the real result once entered. Nothing here presupposes an outcome —
-  // the leaderboard shows whatever the numbers actually show.
+  // Predictions are locked before a draw (19:30 UK time on draw day);
+  // hit-rate is measured against the real result once it's known. Nothing
+  // here presupposes an outcome — the leaderboard shows whatever the
+  // numbers actually show.
   let predictChannel = null;
+  const CUTOFF_MINS = 19*60+30; // 19:30 UK time
+  const BONUS = {
+    lotto: { name:'Bonus ball', count:1, max:59, cls:'bonus', distinctFromMain:true },
+    euro:  { name:'Lucky Stars', count:2, max:12, cls:'star', distinctFromMain:false }
+  };
+  const DRAW_DOWS = { lotto:[3,6], euro:[2,5] };
 
-  function nextDrawDate(gameKey){
-    const targetDows = gameKey==='lotto' ? [3,6] : [2,5];
-    const now = new Date();
-    for(let add=0; add<8; add++){
-      const d = new Date(now.getTime()+add*86400000);
-      if(targetDows.includes(d.getDay())){
-        return d.toISOString().slice(0,10);
-      }
-    }
-    return now.toISOString().slice(0,10);
+  const pt = { game:'lotto', date:null, main:[], bonus:[], pool:'main' };
+  let ptPreds = [];      // all predictions rows for both games
+  let ptResults = {};    // game -> date -> {main, bonus}
+  let hasBonusColumn = true;
+
+  function londonNow(){
+    const parts = {};
+    new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'})
+      .formatToParts(new Date()).forEach(p=>parts[p.type]=p.value);
+    return { date:`${parts.year}-${parts.month}-${parts.day}`, mins: (+parts.hour)*60 + (+parts.minute) };
   }
+  function addDays(iso, n){
+    const d = new Date(iso+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n);
+    return d.toISOString().slice(0,10);
+  }
+  function dowOf(iso){ return new Date(iso+'T12:00:00Z').getUTCDay(); }
+  function fmtDate(iso, opts){
+    return new Date(iso+'T12:00:00Z').toLocaleDateString('en-GB', Object.assign({timeZone:'UTC'}, opts||{weekday:'short',day:'numeric',month:'short'}));
+  }
+  function isOpen(iso){
+    const now = londonNow();
+    return iso > now.date || (iso===now.date && now.mins < CUTOFF_MINS);
+  }
+  function upcomingDraws(gameKey, n){
+    const now = londonNow();
+    const out = [];
+    for(let add=0; out.length<n && add<60; add++){
+      const d = addDays(now.date, add);
+      if(DRAW_DOWS[gameKey].includes(dowOf(d)) && isOpen(d)) out.push(d);
+    }
+    return out;
+  }
+  function lastDrawDate(gameKey){
+    const now = londonNow();
+    for(let add=0; add<8; add++){
+      const d = addDays(now.date, -add);
+      if(DRAW_DOWS[gameKey].includes(dowOf(d)) && !isOpen(d)) return d;
+    }
+    return now.date;
+  }
+  // kept for compatibility with older callers
+  function nextDrawDate(gameKey){ return upcomingDraws(gameKey,1)[0]; }
 
-  function expectedHits(game){
-    return game.mainCount*game.mainCount/game.mainMax;
+  function expectedHits(game){ return game.mainCount*game.mainCount/game.mainMax; }
+  function expectedBonusHits(gameKey){
+    // Lotto: your bonus pick matches the drawn bonus ball = 1/59.
+    // Euro: 2 picked stars vs 2 drawn from 12 = 2*2/12.
+    return gameKey==='lotto' ? 1/59 : 4/12;
   }
 
   function parseNums(raw, game){
@@ -934,21 +1103,220 @@
     return unique.sort((a,b)=>a-b);
   }
 
-  async function renderLeaderboard(gameKey, predRows, resultRows){
-    const board = $('#leaderboard');
-    const game = GAMES[gameKey];
-    const resultsByDate = {};
-    resultRows.forEach(r=> resultsByDate[r.target_date] = r);
+  // Official results: draws.json first, then any admin-entered results.
+  function resultFor(gameKey, date){
+    const fromDb = ptResults[gameKey] && ptResults[gameKey][date];
+    const row = GAMES[gameKey].rows.find(r=>r.date===date);
+    if(row) return { main: row.main, bonus: gameKey==='lotto' ? [row.bonus] : row.stars };
+    return fromDb || null;
+  }
+  function scorePrediction(p){
+    const res = resultFor(p.game, p.target_date);
+    if(!res) return null;
+    const mainHits = p.numbers.filter(n=>res.main.includes(n));
+    const bonus = p.bonus || [];
+    const bonusHits = (res.bonus && res.bonus.length) ? bonus.filter(n=>res.bonus.includes(n)) : [];
+    return { res, mainHits, bonusHits, bonusKnown: !!(res.bonus && res.bonus.length) };
+  }
 
+  // ---- picker rendering ----
+  const ptStatus = $('#predictStatus');
+  function setStatus(msg, kind){ ptStatus.textContent = msg||''; ptStatus.className = 'pt-status'+(kind?' '+kind:''); }
+
+  function myPred(gameKey, date){
+    return ptPreds.find(p=>p.user_id===myId && p.game===gameKey && p.target_date===date);
+  }
+
+  function renderDates(){
+    const wrap = $('#ptDates');
+    const dates = upcomingDraws(pt.game, 6);
+    if(!dates.includes(pt.date)) pt.date = dates[0];
+    wrap.innerHTML = '';
+    dates.forEach(d=>{
+      const b = document.createElement('button');
+      b.type='button'; b.className='date-chip'+(d===pt.date?' active':'');
+      b.innerHTML = `<span class="dow">${fmtDate(d,{weekday:'short'})}</span><span class="dd">${fmtDate(d,{day:'numeric'})}</span><span class="mm">${fmtDate(d,{month:'short'})}</span>`;
+      if(myId && myPred(pt.game, d)){ const dot=document.createElement('i'); dot.className='mine'; dot.title='You have a prediction for this draw'; b.appendChild(dot); }
+      b.addEventListener('click', ()=>{ pt.date = d; loadExistingPick(); renderPicker(); });
+      wrap.appendChild(b);
+    });
+    const now = londonNow();
+    $('#ptDateHint').textContent = pt.date===now.date
+      ? 'Tonight’s draw — predictions close at 7:30pm UK time.'
+      : `Predictions close at 7:30pm UK time on ${fmtDate(pt.date,{weekday:'long',day:'numeric',month:'long'})}.`;
+  }
+
+  function loadExistingPick(){
+    const mine = myId ? myPred(pt.game, pt.date) : null;
+    if(mine){
+      pt.main = mine.numbers.slice();
+      pt.bonus = (mine.bonus||[]).slice();
+      pt.pool = 'main';
+    } else {
+      pt.main = []; pt.bonus = []; pt.pool = 'main';
+    }
+  }
+
+  function renderPicker(){
+    const game = GAMES[pt.game];
+    const bc = BONUS[pt.game];
+    // segmented control
+    document.querySelectorAll('#ptGame button').forEach(b=>b.classList.toggle('active', b.dataset.game===pt.game));
+    renderDates();
+
+    // ticket preview
+    const ticket = $('#ptTicket'); ticket.innerHTML='';
+    const mainSorted = pt.main.slice().sort((a,b)=>a-b);
+    for(let i=0;i<game.mainCount;i++){
+      const n = mainSorted[i];
+      if(n){ const el=document.createElement('button'); el.type='button'; el.className='ball main'; el.textContent=n; el.title='Remove '+n; el.addEventListener('click',()=>{ pt.main=pt.main.filter(x=>x!==n); pt.pool='main'; renderPicker(); }); ticket.appendChild(el); }
+      else { const s=document.createElement('span'); s.className='slot'; ticket.appendChild(s); }
+    }
+    const plus=document.createElement('span'); plus.className='plus'; plus.textContent='+'; ticket.appendChild(plus);
+    const bonusSorted = pt.bonus.slice().sort((a,b)=>a-b);
+    for(let i=0;i<bc.count;i++){
+      const n = bonusSorted[i];
+      if(n){ const el=document.createElement('button'); el.type='button'; el.className='ball '+bc.cls; el.textContent=n; el.title='Remove '+n; el.addEventListener('click',()=>{ pt.bonus=pt.bonus.filter(x=>x!==n); pt.pool='bonus'; renderPicker(); }); ticket.appendChild(el); }
+      else { const s=document.createElement('span'); s.className='slot '+bc.cls+'-slot'; ticket.appendChild(s); }
+    }
+
+    // tabs
+    $('#ptBonusName').textContent = bc.name;
+    $('#ptMainCount').textContent = `${pt.main.length}/${game.mainCount}`;
+    $('#ptBonusCount').textContent = `${pt.bonus.length}/${bc.count}`;
+    document.querySelectorAll('#ptTabs button').forEach(b=>{
+      b.classList.toggle('active', b.dataset.pool===pt.pool);
+      b.classList.toggle('full', b.dataset.pool==='main' ? pt.main.length===game.mainCount : pt.bonus.length===bc.count);
+    });
+
+    // grid
+    const grid = $('#ptGrid'); grid.innerHTML='';
+    const isMain = pt.pool==='main';
+    const max = isMain ? game.mainMax : bc.max;
+    grid.classList.toggle('star-grid', !isMain && pt.game==='euro');
+    for(let n=1;n<=max;n++){
+      const b=document.createElement('button');
+      b.type='button'; b.className='pick'; b.textContent=n; b.dataset.n=n;
+      const on = isMain ? pt.main.includes(n) : pt.bonus.includes(n);
+      if(on){ b.classList.add('on'); if(!isMain) b.classList.add(bc.cls); }
+      b.setAttribute('aria-pressed', on?'true':'false');
+      if(!isMain && bc.distinctFromMain && pt.main.includes(n)){ b.classList.add('taken'); b.disabled=true; b.title='Already one of your main numbers'; }
+      grid.appendChild(b);
+    }
+
+    // button label
+    const existing = myId && myPred(pt.game, pt.date);
+    $('#predictBtn').textContent = existing ? 'Update prediction' : 'Lock it in';
+  }
+
+  $('#ptGrid').addEventListener('click', e=>{
+    const b = e.target.closest('.pick'); if(!b || b.disabled) return;
+    const n = +b.dataset.n;
+    const game = GAMES[pt.game], bc = BONUS[pt.game];
+    setStatus('');
+    if(pt.pool==='main'){
+      if(pt.main.includes(n)) pt.main = pt.main.filter(x=>x!==n);
+      else if(pt.main.length < game.mainCount){
+        pt.main.push(n);
+        if(bc.distinctFromMain) pt.bonus = pt.bonus.filter(x=>x!==n);
+        if(pt.main.length===game.mainCount && pt.bonus.length<bc.count) pt.pool='bonus';
+      } else { setStatus(`You already have ${game.mainCount} main numbers — tap one to remove it first.`); }
+    } else {
+      if(pt.bonus.includes(n)) pt.bonus = pt.bonus.filter(x=>x!==n);
+      else if(pt.bonus.length < bc.count) pt.bonus.push(n);
+      else if(bc.count===1) pt.bonus = [n];
+      else { setStatus(`You already have ${bc.count} ${bc.name} — tap one to remove it first.`); }
+    }
+    renderPicker();
+  });
+  document.querySelectorAll('#ptTabs button').forEach(b=> b.addEventListener('click', ()=>{ pt.pool=b.dataset.pool; renderPicker(); }));
+  document.querySelectorAll('#ptGame button').forEach(b=> b.addEventListener('click', ()=>{
+    if(pt.game===b.dataset.game) return;
+    setPredictGame(b.dataset.game);
+  }));
+  $('#ptClearBtn').addEventListener('click', ()=>{ pt.main=[]; pt.bonus=[]; pt.pool='main'; setStatus(''); renderPicker(); });
+  $('#ptDipBtn').addEventListener('click', ()=>{
+    const game = GAMES[pt.game], bc = BONUS[pt.game];
+    pt.main = randSample(game.mainMax, game.mainCount);
+    if(bc.distinctFromMain){
+      let b; do{ b = 1+Math.floor(Math.random()*bc.max); } while(pt.main.includes(b));
+      pt.bonus = [b];
+    } else pt.bonus = randSample(bc.max, bc.count);
+    pt.pool='main'; setStatus('Random line — every line has exactly the same odds.'); renderPicker();
+  });
+
+  function setPredictGame(gameKey){
+    pt.game = gameKey; pt.date = null;
+    setStatus('');
+    renderDates(); loadExistingPick(); renderPicker();
+    subscribePredictions(gameKey);
+  }
+
+  // ---- your predictions list ----
+  function ballsHtml(nums, cls, hits){
+    return nums.slice().sort((a,b)=>a-b).map(n=>`<span class="ball ${cls}${hits&&hits.includes(n)?' hit':''}">${n}</span>`).join('');
+  }
+  function renderMine(){
+    const box = $('#ptMine');
+    if(!myId){ box.innerHTML = '<div class="circle-empty">Sign in to make and track predictions.</div>'; return; }
+    const mine = ptPreds.filter(p=>p.user_id===myId).sort((a,b)=> b.target_date.localeCompare(a.target_date));
+    if(!mine.length){ box.innerHTML = '<div class="circle-empty">No predictions yet — pick your numbers above and lock them in.</div>'; return; }
+    box.innerHTML='';
+    mine.slice(0,30).forEach(p=>{
+      const game = GAMES[p.game], bc = BONUS[p.game];
+      const sc = scorePrediction(p);
+      const open = isOpen(p.target_date);
+      const row = document.createElement('div'); row.className='pm-row';
+      let state;
+      if(sc){
+        const exp = expectedHits(game).toFixed(2);
+        const bonusTxt = sc.bonusKnown && (p.bonus||[]).length ? ` · ${bc.name.toLowerCase()}: <b>${sc.bonusHits.length}/${bc.count}</b>` : '';
+        state = `Matched <b>${sc.mainHits.length} of ${game.mainCount}</b>${bonusTxt}<br>chance average ${exp}`;
+      } else if(open){
+        state = 'Open — editable until 7:30pm UK';
+      } else {
+        state = 'Locked · waiting for the result';
+      }
+      row.innerHTML = `
+        <div class="pm-when"><b>${fmtDate(p.target_date)}</b><span>${game.label}</span></div>
+        <div class="pm-balls">${ballsHtml(p.numbers,'', sc&&sc.mainHits)}${(p.bonus||[]).length?ballsHtml(p.bonus, bc.cls, sc&&sc.bonusHits):''}</div>
+        <div class="pm-state">${state}</div>`;
+      if(open){
+        const acts = document.createElement('div'); acts.className='pm-actions';
+        const edit = document.createElement('button'); edit.type='button'; edit.textContent='Edit';
+        edit.addEventListener('click', ()=>{
+          if(pt.game!==p.game){ pt.game=p.game; subscribePredictions(p.game); }
+          pt.date=p.target_date; loadExistingPick(); renderPicker();
+          $('#ptGame').scrollIntoView({behavior:'smooth', block:'start'});
+        });
+        const del = document.createElement('button'); del.type='button'; del.textContent='Withdraw';
+        del.addEventListener('click', async ()=>{
+          const { error } = await supa.from('predictions').delete().eq('user_id', myId).eq('game', p.game).eq('target_date', p.target_date);
+          if(error){ setStatus('Could not withdraw that one.', 'err'); return; }
+          ptPreds = ptPreds.filter(x=>x!==p);
+          if(p.game===pt.game && p.target_date===pt.date) loadExistingPick();
+          renderPicker(); renderMine();
+        });
+        acts.append(edit, del); row.appendChild(acts);
+      }
+      box.appendChild(row);
+    });
+  }
+
+  // ---- leaderboard ----
+  async function renderLeaderboard(gameKey){
+    const board = $('#leaderboard');
+    const game = GAMES[gameKey], bc = BONUS[gameKey];
+    $('#lbGameName').textContent = game.label;
     const totals = {};
-    predRows.forEach(p=>{
-      const res = resultsByDate[p.target_date];
-      if(!res) return;
-      const hits = p.numbers.filter(n=>res.main.includes(n)).length;
-      if(!totals[p.user_id]) totals[p.user_id] = {hits:0, expected:0, n:0};
-      totals[p.user_id].hits += hits;
-      totals[p.user_id].expected += expectedHits(game);
-      totals[p.user_id].n += 1;
+    ptPreds.filter(p=>p.game===gameKey).forEach(p=>{
+      const sc = scorePrediction(p);
+      if(!sc) return;
+      const t = totals[p.user_id] = totals[p.user_id] || {hits:0, expected:0, n:0, bHits:0, bExpected:0};
+      t.hits += sc.mainHits.length;
+      t.expected += expectedHits(game);
+      t.n += 1;
+      if(sc.bonusKnown && (p.bonus||[]).length===bc.count){ t.bHits += sc.bonusHits.length; t.bExpected += expectedBonusHits(gameKey); }
     });
 
     const rows = Object.entries(totals).map(([uid,t])=>({uid, ...t, ratio: t.expected>0 ? t.hits/t.expected : 0}));
@@ -956,7 +1324,7 @@
 
     board.innerHTML='';
     if(rows.length===0){
-      board.innerHTML = '<div class="circle-empty">No scored predictions yet — lock one in, then add the real result once it\'s drawn.</div>';
+      board.innerHTML = `<div class="circle-empty">No scored ${game.label} predictions yet — they’re scored automatically once the draw result is in.</div>`;
       return;
     }
     const profiles = await profilesFor(rows.map(r=>r.uid));
@@ -964,8 +1332,9 @@
       const name = (profiles[r.uid]&&profiles[r.uid].name) || 'Someone';
       const row = document.createElement('div');
       row.className='lb-row';
+      const bonusTxt = r.bExpected>0 ? ` · ${bc.name}: <b>${r.bHits}</b> vs <b>${r.bExpected.toFixed(2)}</b>` : '';
       row.innerHTML = `<span class="lb-rank">#${i+1}</span><span class="lb-name"></span>
-        <span class="lb-stat">Actual: <b>${r.hits}</b> · Expected by chance: <b>${r.expected.toFixed(1)}</b> · over ${r.n} draw${r.n===1?'':'s'}</span>`;
+        <span class="lb-stat">Main hits: <b>${r.hits}</b> · Expected by chance: <b>${r.expected.toFixed(1)}</b>${bonusTxt} · over ${r.n} draw${r.n===1?'':'s'}</span>`;
       row.querySelector('.lb-name').textContent = name;
       board.appendChild(row);
     });
@@ -973,58 +1342,77 @@
 
   async function refreshPredictions(gameKey){
     const [{ data: preds }, { data: results }] = await Promise.all([
-      supa.from('predictions').select('user_id,target_date,numbers').eq('game', gameKey).limit(500),
-      supa.from('results').select('target_date,main').eq('game', gameKey).limit(200)
+      supa.from('predictions').select('*').limit(1000),
+      supa.from('results').select('*').limit(500)
     ]);
-    renderLeaderboard(gameKey, preds||[], results||[]);
+    ptPreds = preds || [];
+    if(ptPreds.length && !('bonus' in ptPreds[0])) hasBonusColumn = false;
+    ptResults = {lotto:{}, euro:{}};
+    (results||[]).forEach(r=>{ if(ptResults[r.game]) ptResults[r.game][r.target_date] = { main:r.main, bonus:r.bonus||[] }; });
+    // If the current pick is empty, pre-fill with an existing prediction for this draw.
+    if(!pt.main.length && !pt.bonus.length) loadExistingPick();
+    renderPicker();
+    renderMine();
+    renderLeaderboard(gameKey);
   }
 
   function subscribePredictions(gameKey){
     if(predictChannel){ supa.removeChannel(predictChannel); predictChannel=null; }
-
-    const target = nextDrawDate(gameKey);
-    $('#predictTarget').innerHTML = `Predicting for the next draw: <b>${target}</b>`;
+    if(!pt.date) pt.date = upcomingDraws(gameKey,1)[0];
+    renderPicker();
 
     refreshPredictions(gameKey);
     predictChannel = supa.channel('predictions-'+gameKey)
-      .on('postgres_changes', { event:'*', schema:'public', table:'predictions' }, ()=> refreshPredictions(gameKey))
-      .on('postgres_changes', { event:'*', schema:'public', table:'results' }, ()=> refreshPredictions(gameKey))
+      .on('postgres_changes', { event:'*', schema:'public', table:'predictions' }, ()=> refreshPredictions(pt.game))
+      .on('postgres_changes', { event:'*', schema:'public', table:'results' }, ()=> refreshPredictions(pt.game))
       .subscribe();
 
     $('#resultEntry').hidden = !canEditPage;
-    if(canEditPage) $('#resultDate').value = target;
+    $('#resultGameName').textContent = GAMES[gameKey].label;
+    $('#resultBonus').placeholder = gameKey==='lotto' ? 'Bonus ball' : 'Lucky Stars (2)';
+    if(canEditPage) $('#resultDate').value = lastDrawDate(gameKey);
   }
 
   $('#predictBtn').addEventListener('click', async ()=>{
-    const status = $('#predictStatus');
-    const game = GAMES[current];
-    if(!myId){ status.textContent='Sign in to lock in a prediction.'; return; }
-    const nums = parseNums($('#predictInput').value, game);
-    if(!nums){ status.textContent = `Enter exactly ${game.mainCount} distinct numbers between 1 and ${game.mainMax}.`; return; }
-    const target = nextDrawDate(current);
+    const game = GAMES[pt.game], bc = BONUS[pt.game];
+    if(!myId){ setStatus('Sign in (top of the page) to lock in a prediction.', 'err'); return; }
+    if(pt.main.length!==game.mainCount){ pt.pool='main'; renderPicker(); setStatus(`Pick ${game.mainCount - pt.main.length} more main number${game.mainCount-pt.main.length===1?'':'s'}.`, 'err'); return; }
+    if(pt.bonus.length!==bc.count){ pt.pool='bonus'; renderPicker(); setStatus(`Pick your ${bc.name.toLowerCase()} (${bc.count - pt.bonus.length} more).`, 'err'); return; }
+    if(!isOpen(pt.date)){ setStatus('Predictions for that draw have closed.', 'err'); renderPicker(); return; }
+    const row = { user_id: myId, game: pt.game, target_date: pt.date, numbers: pt.main.slice().sort((a,b)=>a-b) };
+    if(hasBonusColumn) row.bonus = pt.bonus.slice().sort((a,b)=>a-b);
+    const btn = $('#predictBtn'); btn.disabled = true;
     try{
-      const { error } = await supa.from('predictions').upsert({
-        user_id: myId, game: current, target_date: target, numbers: nums
-      }, { onConflict: 'user_id,game,target_date' });
+      let { error } = await supa.from('predictions').upsert(row, { onConflict: 'user_id,game,target_date' });
+      if(error && /bonus/i.test(error.message||'') && row.bonus){
+        // Database not migrated yet — save main numbers only.
+        hasBonusColumn = false; delete row.bonus;
+        ({ error } = await supa.from('predictions').upsert(row, { onConflict: 'user_id,game,target_date' }));
+      }
       if(error) throw error;
-      status.textContent = `Locked in for ${target}. Resubmitting before the draw overwrites it.`;
-    }catch(e){ status.textContent = 'Could not lock that in right now.'; }
+      setStatus(`Locked in for ${game.label}, ${fmtDate(pt.date,{weekday:'long',day:'numeric',month:'long'})}. You can change it until 7:30pm UK time that day.`, 'ok');
+      await refreshPredictions(pt.game);
+    }catch(e){
+      setStatus(/closed|locked/i.test(e.message||'') ? 'Predictions for that draw have closed.' : 'Could not lock that in right now.', 'err');
+    }finally{ btn.disabled = false; }
   });
 
   $('#resultBtn').addEventListener('click', async ()=>{
     const status = $('#resultStatus');
-    const game = GAMES[current];
+    const game = GAMES[pt.game], bc = BONUS[pt.game];
     const date = $('#resultDate').value;
     const nums = parseNums($('#resultInput').value, game);
+    const bonusNums = Array.from(new Set($('#resultBonus').value.split(/[,\s]+/).map(x=>parseInt(x,10)).filter(n=>!isNaN(n))));
     if(!date){ status.textContent='Pick the draw date.'; return; }
-    if(!nums){ status.textContent = `Enter exactly ${game.mainCount} distinct numbers between 1 and ${game.mainMax}.`; return; }
+    if(!nums){ status.textContent = `Enter exactly ${game.mainCount} distinct main numbers between 1 and ${game.mainMax}.`; return; }
+    if(bonusNums.length!==bc.count || bonusNums.some(n=>n<1||n>bc.max)){ status.textContent = `Enter ${bc.count} ${bc.name.toLowerCase()} between 1 and ${bc.max}.`; return; }
+    const row = { game: pt.game, target_date: date, main: nums, entered_by: myId };
+    if(hasBonusColumn) row.bonus = bonusNums.sort((a,b)=>a-b);
     try{
-      const { error } = await supa.from('results').upsert({
-        game: current, target_date: date, main: nums, entered_by: myId
-      }, { onConflict: 'game,target_date' });
+      const { error } = await supa.from('results').upsert(row, { onConflict: 'game,target_date' });
       if(error) throw error;
-      status.textContent = 'Result saved — leaderboard updated.';
-      $('#resultInput').value='';
+      status.textContent = 'Result saved — predictions rescored.';
+      $('#resultInput').value=''; $('#resultBonus').value='';
     }catch(e){ status.textContent = 'Could not save that result (editor access required).'; }
   });
 
@@ -1039,7 +1427,7 @@
     $('#checkInput').value='';
     $('#circleOddsNote').textContent = GAMES[key].jackpotOdds;
     subscribeCircles(key);
-    subscribePredictions(key);
+    setPredictGame(key);
   }
   $('#tabLotto').addEventListener('click', ()=>switchGame('lotto'));
   $('#tabEuro').addEventListener('click', ()=>switchGame('euro'));
