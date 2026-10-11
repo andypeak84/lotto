@@ -556,6 +556,7 @@
   <span id="rangeText"></span><br>
   UK Lotto figures use the current 6/59 format (introduced Oct 2015); EuroMillions Lucky Star stats use the stable 1–12 era (since Sep 2016) so an old rule change doesn't masquerade as a pattern.<br>
   Every draw is independent — this tool is for picking lines you like, not for predicting winners.
+  <span id="adminLink" hidden><br><a href="admin.html">Admin report</a></span>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -573,11 +574,13 @@
 
   async function refreshProfile(){
     canEditPage = false;
+    { const al = document.getElementById('adminLink'); if(al) al.hidden = true; }
     if(!myId) return;
     try{
       const { data } = await supa.from('profiles').select('is_admin,display_name').eq('id', myId).maybeSingle();
       canEditPage = !!(data && data.is_admin);
     }catch(e){}
+    const al = document.getElementById('adminLink'); if(al) al.hidden = !canEditPage;
   }
 
   async function profilesFor(ids){
