@@ -152,8 +152,6 @@
   :root:not([data-theme="light"]) .ball.star{color:#0c1512;}
   :root[data-theme="dark"] .ball.star{color:#0c1512;}
   .ball.bonus{background:var(--brass);border-color:var(--brass);color:#fff;}
-  :root:not([data-theme="light"]) .ball.bonus{color:#241a04;}
-  :root[data-theme="dark"] .ball.bonus{color:#241a04;}
 
   .gen-actions{display:flex;gap:10px;flex-wrap:wrap;}
   button.primary{
@@ -313,7 +311,6 @@
   .slot.bonus-slot{border-color:var(--brass);opacity:.6;}
   .slot.star-slot{border-color:var(--teal);opacity:.6;}
   .pt-ticket .ball{cursor:pointer;border-width:1.5px;}
-  .pt-ticket .ball.main{background:var(--text);border-color:var(--text);color:var(--paper);}
 
   .pick-tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
   .pick-tabs button{
@@ -334,12 +331,9 @@
   .pick:hover{border-color:var(--text-dim);}
   .pick:active{transform:scale(.92);}
   .pick.on{background:var(--text);border-color:var(--text);color:var(--paper);}
-  .pick.on.bonus{background:var(--brass);border-color:var(--brass);color:#fff;}
   .pick.on.star{background:var(--teal);border-color:var(--teal);color:#fff;}
   :root:not([data-theme="light"]) .pick.on.star{color:#0c1512;}
   :root[data-theme="dark"] .pick.on.star{color:#0c1512;}
-  :root:not([data-theme="light"]) .pick.on.bonus{color:#241a04;}
-  :root[data-theme="dark"] .pick.on.bonus{color:#241a04;}
   .pick.taken{opacity:.28;cursor:not-allowed;}
   .pick-grid.star-grid{grid-template-columns:repeat(auto-fill,minmax(44px,1fr));}
 
@@ -370,6 +364,16 @@
     padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);
     color:var(--text);font-family:'Inter';font-size:.85rem;color-scheme:light dark;
   }
+  /* Ball colours by number band: 1-9 white, 10s blue, 20s pink, 30s green, 40s yellow, 50s purple */
+  .ball.c-white,.pick.on.c-white{background:#f7f6f1;border-color:#cfc9b8;color:#241f18;}
+  .ball.c-blue,.pick.on.c-blue{background:#2b74d1;border-color:#2b74d1;color:#fff;}
+  .ball.c-pink,.pick.on.c-pink{background:#ec6fa9;border-color:#ec6fa9;color:#fff;}
+  .ball.c-green,.pick.on.c-green{background:#2c9a56;border-color:#2c9a56;color:#fff;}
+  .ball.c-yellow,.pick.on.c-yellow{background:#f3c52f;border-color:#f3c52f;color:#2a2105;}
+  .ball.c-purple,.pick.on.c-purple{background:#8350c4;border-color:#8350c4;color:#fff;}
+  /* Bonus ball keeps its number colour, marked with a brass ring */
+  .ball.bonus[class*="c-"],.pick.on.bonus{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--brass);}
+  .pm-balls .ball.hit{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--teal) !important;}
   @media (max-width:480px){
     .seg button small{display:none;}
     .pt-ticket{gap:5px;padding:10px;}
@@ -813,12 +817,16 @@
     const div = document.createElement('div');
     div.className='line';
     line.main.forEach(n=>{
-      const b=document.createElement('div'); b.className='ball'; b.textContent=n; div.appendChild(b);
+      const b=document.createElement('div'); b.className='ball '+ballColor(n); b.textContent=n; div.appendChild(b);
     });
     if(line.stars) line.stars.forEach(n=>{
       const b=document.createElement('div'); b.className='ball star'; b.textContent=n; div.appendChild(b);
     });
     return div;
+  }
+
+  function ballColor(n){
+    return n<10?'c-white':n<20?'c-blue':n<30?'c-pink':n<40?'c-green':n<50?'c-yellow':'c-purple';
   }
 
   let currentMode='dip', avoidExisting=true;
@@ -965,7 +973,7 @@
       const card = document.createElement('div');
       card.className='circle-card';
       card.innerHTML = `
-        <div class="ball" style="width:34px;height:34px;font-size:.82rem;">${d.focusNumber}</div>
+        <div class="ball ${ballColor(d.focusNumber)}" style="width:34px;height:34px;font-size:.82rem;">${d.focusNumber}</div>
         <div class="cinfo">
           <div class="cname"></div>
           <div class="cmeta">${members.length} focused</div>
@@ -1169,14 +1177,14 @@
     const mainSorted = pt.main.slice().sort((a,b)=>a-b);
     for(let i=0;i<game.mainCount;i++){
       const n = mainSorted[i];
-      if(n){ const el=document.createElement('button'); el.type='button'; el.className='ball main'; el.textContent=n; el.title='Remove '+n; el.addEventListener('click',()=>{ pt.main=pt.main.filter(x=>x!==n); pt.pool='main'; renderPicker(); }); ticket.appendChild(el); }
+      if(n){ const el=document.createElement('button'); el.type='button'; el.className='ball main '+ballColor(n); el.textContent=n; el.title='Remove '+n; el.addEventListener('click',()=>{ pt.main=pt.main.filter(x=>x!==n); pt.pool='main'; renderPicker(); }); ticket.appendChild(el); }
       else { const s=document.createElement('span'); s.className='slot'; ticket.appendChild(s); }
     }
     const plus=document.createElement('span'); plus.className='plus'; plus.textContent='+'; ticket.appendChild(plus);
     const bonusSorted = pt.bonus.slice().sort((a,b)=>a-b);
     for(let i=0;i<bc.count;i++){
       const n = bonusSorted[i];
-      if(n){ const el=document.createElement('button'); el.type='button'; el.className='ball '+bc.cls; el.textContent=n; el.title='Remove '+n; el.addEventListener('click',()=>{ pt.bonus=pt.bonus.filter(x=>x!==n); pt.pool='bonus'; renderPicker(); }); ticket.appendChild(el); }
+      if(n){ const el=document.createElement('button'); el.type='button'; el.className='ball '+bc.cls+(bc.cls==='bonus'?' '+ballColor(n):''); el.textContent=n; el.title='Remove '+n; el.addEventListener('click',()=>{ pt.bonus=pt.bonus.filter(x=>x!==n); pt.pool='bonus'; renderPicker(); }); ticket.appendChild(el); }
       else { const s=document.createElement('span'); s.className='slot '+bc.cls+'-slot'; ticket.appendChild(s); }
     }
 
@@ -1198,7 +1206,7 @@
       const b=document.createElement('button');
       b.type='button'; b.className='pick'; b.textContent=n; b.dataset.n=n;
       const on = isMain ? pt.main.includes(n) : pt.bonus.includes(n);
-      if(on){ b.classList.add('on'); if(!isMain) b.classList.add(bc.cls); }
+      if(on){ b.classList.add('on'); if(!isMain) b.classList.add(bc.cls); if(isMain || bc.cls==='bonus') b.classList.add(ballColor(n)); }
       b.setAttribute('aria-pressed', on?'true':'false');
       if(!isMain && bc.distinctFromMain && pt.main.includes(n)){ b.classList.add('taken'); b.disabled=true; b.title='Already one of your main numbers'; }
       grid.appendChild(b);
@@ -1254,7 +1262,7 @@
 
   // ---- your predictions list ----
   function ballsHtml(nums, cls, hits){
-    return nums.slice().sort((a,b)=>a-b).map(n=>`<span class="ball ${cls}${hits&&hits.includes(n)?' hit':''}">${n}</span>`).join('');
+    return nums.slice().sort((a,b)=>a-b).map(n=>`<span class="ball ${cls}${cls!=='star'?' '+ballColor(n):''}${hits&&hits.includes(n)?' hit':''}">${n}</span>`).join('');
   }
   function renderMine(){
     const box = $('#ptMine');
