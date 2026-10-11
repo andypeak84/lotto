@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Draw Room Admin</title>
+<style>
+  :root{
+    --paper:#faf8f2; --surface:#ffffff; --surface-2:#f0ede3; --line:#e2ddce;
+    --text:#241f18; --text-dim:#6b6455; --brass:#9c7a1f; --brass-strong:#7a5f16;
+    --teal:#1f7d72; --teal-strong:#155953; --red:#a3392c;
+    --shadow: 0 1px 2px rgba(36,31,24,.06), 0 8px 24px -12px rgba(36,31,24,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#15140f; --surface:#1c1a14; --surface-2:#242119; --line:#332e22;
+      --text:#f1ede2; --text-dim:#a99f8a; --brass:#d9b24c; --brass-strong:#eccb6b;
+      --teal:#4bbdae; --teal-strong:#6fd4c6; --red:#e08774;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px -14px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#15140f; --surface:#1c1a14; --surface-2:#242119; --line:#332e22;
+    --text:#f1ede2; --text-dim:#a99f8a; --brass:#d9b24c; --brass-strong:#eccb6b;
+    --teal:#4bbdae; --teal-strong:#6fd4c6; --red:#e08774;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px -14px rgba(0,0,0,.6);
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+  *{box-sizing:border-box;}
+  html,body{background:var(--paper);color:var(--text);}
+  body{margin:0 auto;font-family:'Inter',ui-sans-serif,system-ui,sans-serif;padding:28px 16px 60px;max-width:1080px;line-height:1.5;}
+  h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;letter-spacing:-0.01em;margin:0;}
+  .num{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;}
+  a{color:var(--teal-strong);}
+
+  header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px;}
+  header.top h1{font-size:1.6rem;}
+  header.top p{margin:.2rem 0 0;color:var(--text-dim);font-size:.88rem;}
+  .who{display:flex;align-items:center;gap:10px;font-size:.84rem;color:var(--text-dim);flex-wrap:wrap;}
+
+  section{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:18px;box-shadow:var(--shadow);}
+  section h2{font-size:1.12rem;margin-bottom:4px;}
+  .sub{color:var(--text-dim);font-size:.84rem;margin-bottom:14px;}
+
+  button{font-family:'Inter';cursor:pointer;}
+  .btn{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:10px;padding:9px 14px;font-size:.84rem;font-weight:500;}
+  .btn.primary{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:600;}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .btn.primary{color:#0c1512;} }
+  :root[data-theme="dark"] .btn.primary{color:#0c1512;}
+  .google{display:inline-flex;align-items:center;gap:8px;background:#fff;color:#1f1f1f;border:1px solid #dadce0;border-radius:10px;padding:10px 16px;font-size:.88rem;font-weight:600;}
+  .google svg{width:18px;height:18px;}
+  input,select{
+    padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);
+    color:var(--text);font-family:'Inter';font-size:.85rem;color-scheme:light dark;
+  }
+
+  .gate{max-width:420px;margin:60px auto;text-align:center;}
+  .gate .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px;}
+  .gate .msg{margin-top:12px;font-size:.84rem;color:var(--text-dim);min-height:1.2em;}
+
+  .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+  .filters label{display:flex;flex-direction:column;gap:4px;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);font-weight:600;}
+
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;}
+  .tile{background:var(--surface-2);border-radius:12px;padding:12px 14px;}
+  .tile .k{font-family:'Fraunces';font-size:1.45rem;color:var(--brass-strong);}
+  .tile .l{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);}
+  .tile .s{font-size:.76rem;color:var(--text-dim);margin-top:2px;}
+
+  .tbl-wrap{overflow-x:auto;margin:0 -4px;}
+  table{width:100%;border-collapse:collapse;font-size:.84rem;min-width:640px;}
+  th{text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);font-weight:600;padding:8px 8px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none;}
+  th.sorted::after{content:' ▾';}
+  th.sorted.asc::after{content:' ▴';}
+  td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  td .em{display:block;font-size:.74rem;color:var(--text-dim);}
+  .right{text-align:right;}
+
+  .balls{display:flex;gap:3px;flex-wrap:nowrap;}
+  .ball{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono';font-weight:600;font-size:.7rem;border:1.5px solid var(--line);background:var(--surface-2);color:var(--text);flex:none;}
+  .ball.c-white{background:#f7f6f1;border-color:#cfc9b8;color:#241f18;}
+  .ball.c-blue{background:#2b74d1;border-color:#2b74d1;color:#fff;}
+  .ball.c-pink{background:#ec6fa9;border-color:#ec6fa9;color:#fff;}
+  .ball.c-green{background:#2c9a56;border-color:#2c9a56;color:#fff;}
+  .ball.c-yellow{background:#f3c52f;border-color:#f3c52f;color:#2a2105;}
+  .ball.c-purple{background:#8350c4;border-color:#8350c4;color:#fff;}
+  .ball.star{background:var(--teal);border-color:var(--teal);color:#fff;}
+  .ball.miss{opacity:.35;}
+  .ball.hit{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--teal);}
+  .sep{color:var(--text-dim);margin:0 2px;font-weight:600;align-self:center;}
+
+  .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:.72rem;font-weight:600;white-space:nowrap;background:var(--surface-2);color:var(--text-dim);}
+  .pill.good{background:color-mix(in srgb, var(--teal) 18%, transparent);color:var(--teal-strong);}
+  .pill.warm{background:color-mix(in srgb, var(--brass) 20%, transparent);color:var(--brass-strong);}
+  .pill.low{color:var(--text-dim);}
+  .hitcount{font-family:'IBM Plex Mono';font-weight:600;}
+  .hitcount.big{color:var(--teal-strong);}
+
+  .bar{position:relative;height:8px;border-radius:4px;background:var(--surface-2);min-width:110px;}
+  .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--brass);}
+  .bar b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--text);opacity:.55;}
+
+  .pending-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 12px;border-radius:12px;background:var(--surface-2);margin-bottom:8px;}
+  .pending-row .when{min-width:150px;font-size:.86rem;}
+  .pending-row .when span{display:block;font-size:.74rem;color:var(--text-dim);}
+  .pending-row input{flex:1;min-width:150px;}
+  .pending-row input.bonus{flex:0 1 120px;min-width:100px;}
+  .status{font-size:.82rem;color:var(--text-dim);min-height:1.1em;}
+  .status.err{color:var(--red);}
+  .status.ok{color:var(--teal-strong);}
+  .empty{color:var(--text-dim);font-size:.85rem;padding:6px 2px;}
+  .note{font-size:.76rem;color:var(--text-dim);margin-top:10px;}
+  [hidden]{display:none !important;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div>
+    <h1>Draw Room Admin</h1>
+    <p>Prediction Test report — who hit what, and how it compares with pure chance.</p>
+  </div>
+  <div class="who" id="who"></div>
+</header>
+
+<!-- Sign-in gate -->
+<div id="gate" class="gate" hidden>
+  <section>
+    <h2>Admin sign-in</h2>
+    <div class="sub" id="gateSub">Sign in with an admin account to see the report.</div>
+    <div class="row">
+      <button class="google" id="googleBtn" type="button"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>Continue with Google</button>
+    </div>
+    <div class="row">
+      <input type="email" id="emailIn" placeholder="admin@example.com" style="min-width:220px;">
+      <button class="btn" id="emailBtn" type="button">Email me a link</button>
+    </div>
+    <div class="msg" id="gateMsg"></div>
+  </section>
+  <p class="note"><a href="./">← Back to Draw Room</a></p>
+</div>
+
+<!-- Report -->
+<main id="report" hidden>
+  <section>
+    <div class="filters">
+      <label>Game
+        <select id="fGame"><option value="all">Both games</option><option value="lotto">UK Lotto</option><option value="euro">EuroMillions</option></select>
+      </label>
+      <label>From <input type="date" id="fFrom"></label>
+      <label>To <input type="date" id="fTo"></label>
+      <label>Min. main hits
+        <select id="fMin"><option value="0">0 (all)</option><option value="1">1+</option><option value="2" selected>2+</option><option value="3">3+</option><option value="4">4+</option><option value="5">5+</option><option value="6">6</option></select>
+      </label>
+      <label>Search <input type="text" id="fSearch" placeholder="Name or email"></label>
+      <button class="btn" id="refreshBtn" type="button">Refresh</button>
+      <button class="btn primary" id="csvBtn" type="button">Download CSV</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Summary</h2>
+    <div class="sub" id="sumSub"></div>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section>
+    <h2>Hits by draw</h2>
+    <div class="sub">Every scored prediction that meets the filters. Ringed balls matched the real draw.</div>
+    <div class="tbl-wrap"><table id="hitsTbl"></table></div>
+  </section>
+
+  <section>
+    <h2>Players vs chance</h2>
+    <div class="sub">Hit rate = matched main numbers ÷ main numbers picked. Chance is <span id="chanceTxt"></span>. The black tick on each bar is the chance line.</div>
+    <div class="tbl-wrap"><table id="playersTbl"></table></div>
+    <p class="note">“Unlikely to be luck” means p &lt; 1% for that player alone. With many players, a few will cross that line by luck — treat it as a reason to keep watching, not proof.</p>
+  </section>
+
+  <section>
+    <h2>Draws waiting for a result</h2>
+    <div class="sub">Closed draws that have predictions but no result yet. Enter the official numbers to score them.</div>
+    <div id="pending"></div>
+  </section>
+
+  <p class="note"><a href="./">← Back to Draw Room</a></p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(async function(){
+  const SUPABASE_URL = 'https://talubhstvuqluwaztllv.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRhbHViaHN0dnVxbHV3YXp0bGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwODQ0MjMsImV4cCI6MjEwNjY2MDQyM30.o7_p_tcP_QVto8yg35IvTjKJvc8tQK2TBdVxp1Y3-zA';
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const $ = s=>document.querySelector(s);
+  const esc = s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  const GAMES = {
+    lotto:{ label:'UK Lotto', short:'Lotto', mainCount:6, mainMax:59, bonusCount:1, bonusMax:59, bonusName:'Bonus' },
+    euro: { label:'EuroMillions', short:'Euro', mainCount:5, mainMax:50, bonusCount:2, bonusMax:12, bonusName:'Stars' }
+  };
+  const DRAW_DOWS = { lotto:[3,6], euro:[2,5] };
+  const CUTOFF_MINS = 19*60+30;
+
+  // ---------- auth gate ----------
+  let session = null;
+  function showGate(msg){
+    $('#report').hidden = true; $('#gate').hidden = false;
+    if(msg) $('#gateSub').innerHTML = msg;
+  }
+  function renderWho(){
+    const who = $('#who'); who.innerHTML='';
+    if(!session) return;
+    const span = document.createElement('span'); span.textContent = session.user.email || 'Signed in';
+    const out = document.createElement('button'); out.className='btn'; out.type='button'; out.textContent='Sign out';
+    out.addEventListener('click', async ()=>{ await supa.auth.signOut(); location.reload(); });
+    who.append(span, out);
+  }
+  $('#googleBtn').addEventListener('click', async ()=>{
+    const { error } = await supa.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: location.origin + location.pathname } });
+    if(error) $('#gateMsg').textContent = 'Google sign-in isn’t available right now.';
+  });
+  $('#emailBtn').addEventListener('click', async ()=>{
+    const email = $('#emailIn').value.trim();
+    if(!email){ $('#gateMsg').textContent='Enter your email first.'; return; }
+    $('#gateMsg').textContent='Sending…';
+    const { error } = await supa.auth.signInWithOtp({ email, options:{ emailRedirectTo: location.origin + location.pathname } });
+    $('#gateMsg').textContent = error ? 'Could not send that right now.' : 'Check your email for a sign-in link.';
+  });
+
+  async function checkAdmin(){
+    const { data } = await supa.auth.getSession();
+    session = data.session;
+    renderWho();
+    if(!session){ showGate(); return false; }
+    const { data: prof } = await supa.from('profiles').select('is_admin').eq('id', session.user.id).maybeSingle();
+    if(!prof || !prof.is_admin){
+      showGate(`Signed in as <b>${esc(session.user.email||'')}</b>, but this account isn’t an admin.`);
+      $('#googleBtn').parentElement.hidden = true; $('#emailBtn').parentElement.hidden = true;
+      return false;
+    }
+    $('#gate').hidden = true; $('#report').hidden = false;
+    return true;
+  }
+  supa.auth.onAuthStateChange((evt)=>{ if(evt==='SIGNED_IN' || evt==='SIGNED_OUT') boot(); });
+
+  // ---------- helpers ----------
+  function londonNow(){
+    const p = {};
+    new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'})
+      .formatToParts(new Date()).forEach(x=>p[x.type]=x.value);
+    return { date:`${p.year}-${p.month}-${p.day}`, mins:(+p.hour)*60+(+p.minute) };
+  }
+  function isClosed(iso){ const n=londonNow(); return iso < n.date || (iso===n.date && n.mins>=CUTOFF_MINS); }
+  function fmtDate(iso){ return new Date(iso+'T12:00:00Z').toLocaleDateString('en-GB',{timeZone:'UTC',weekday:'short',day:'numeric',month:'short',year:'numeric'}); }
+  function ballColor(n){ return n<10?'c-white':n<20?'c-blue':n<30?'c-pink':n<40?'c-green':n<50?'c-yellow':'c-purple'; }
+  function ballsHtml(nums, hits, star){
+    return nums.slice().sort((a,b)=>a-b).map(n=>{
+      const hit = hits && hits.includes(n);
+      const cls = star ? 'star' : ballColor(n);
+      return `<span class="ball ${cls}${hits ? (hit?' hit':' miss') : ''}">${n}</span>`;
+    }).join('');
+  }
+  // Binomial upper tail P(X >= k), X ~ Bin(n, p) — computed in log space.
+  function lgamma(x){ // Lanczos
+    const g=7, c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+    if(x<0.5) return Math.log(Math.PI/Math.sin(Math.PI*x)) - lgamma(1-x);
+    x-=1; let a=c[0]; const t=x+g+0.5;
+    for(let i=1;i<g+2;i++) a+=c[i]/(x+i);
+    return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(a);
+  }
+  function binomUpper(k, n, p){
+    if(k<=0) return 1;
+    let s=0;
+    for(let i=k;i<=n;i++){
+      s += Math.exp(lgamma(n+1)-lgamma(i+1)-lgamma(n-i+1)+i*Math.log(p)+(n-i)*Math.log(1-p));
+    }
+    return Math.min(1, s);
+  }
+  function verdict(t){
+    if(t.draws < 5) return ['Too early to tell','low'];
+    if(t.rate < t.chance) return ['Below chance','low'];
+    if(t.p < 0.01) return ['Beating chance — unlikely to be luck','good'];
+    if(t.p < 0.05) return ['Above chance — could still be luck','warm'];
+    return ['In line with chance',''];
+  }
+
+  // ---------- data ----------
+  let DRAWS = null, preds = [], dbResults = {}, people = {}, emails = {}, hasBonus = true;
+  async function loadAll(){
+    if(!DRAWS){
+      try{ DRAWS = await (await fetch('draws.json')).json(); }catch(e){ DRAWS = {lotto:[], euro:[]}; }
+    }
+    const [pr, rs, pf] = await Promise.all([
+      supa.from('predictions').select('*').limit(5000),
+      supa.from('results').select('*').limit(2000),
+      supa.from('profiles').select('id,display_name').limit(5000)
+    ]);
+    preds = pr.data || [];
+    hasBonus = !preds.length || ('bonus' in preds[0]);
+    dbResults = {lotto:{}, euro:{}};
+    (rs.data||[]).forEach(r=>{ if(dbResults[r.game]) dbResults[r.game][r.target_date] = { main:r.main, bonus:r.bonus||[], source:'entered' }; });
+    people = {}; (pf.data||[]).forEach(p=> people[p.id] = p.display_name || '');
+    try{
+      const { data, error } = await supa.rpc('admin_user_emails');
+      if(!error) (data||[]).forEach(r=> emails[r.id] = r.email);
+    }catch(e){}
+  }
+  function officialResult(game, date){
+    const rows = (DRAWS && DRAWS[game]) || [];
+    const r = rows.find(x=>x[0]===date);
+    if(r){
+      return game==='lotto' ? { main:r.slice(1,7), bonus:[r[7]], source:'official' } : { main:r.slice(1,6), bonus:r.slice(6,8), source:'official' };
+    }
+    return dbResults[game] && dbResults[game][date] || null;
+  }
+  function scored(){
+    return preds.map(p=>{
+      const res = officialResult(p.game, p.target_date);
+      if(!res) return null;
+      const g = GAMES[p.game];
+      const bonus = p.bonus || [];
+      const mainHits = p.numbers.filter(n=>res.main.includes(n));
+      const bonusHits = (res.bonus||[]).length ? bonus.filter(n=>res.bonus.includes(n)) : [];
+      return { p, g, res, bonus, mainHits, bonusHits, name: people[p.user_id] || 'Unknown', email: emails[p.user_id] || '' };
+    }).filter(Boolean);
+  }
+
+  // ---------- filters ----------
+  function filters(){
+    return { game:$('#fGame').value, from:$('#fFrom').value, to:$('#fTo').value, min:+$('#fMin').value, q:$('#fSearch').value.trim().toLowerCase() };
+  }
+  function passes(s, f, ignoreMin){
+    if(f.game!=='all' && s.p.game!==f.game) return false;
+    if(f.from && s.p.target_date < f.from) return false;
+    if(f.to && s.p.target_date > f.to) return false;
+    if(f.q && !(s.name.toLowerCase().includes(f.q) || s.email.toLowerCase().includes(f.q))) return false;
+    if(!ignoreMin && s.mainHits.length < f.min) return false;
+    return true;
+  }
+
+  // ---------- render ----------
+  let hitSort = { key:'hits', asc:false }, playerSort = { key:'ratio', asc:false };
+  let lastHitRows = [];
+
+  function render(){
+    const f = filters();
+    const all = scored().filter(s=>passes(s, f, true));
+    const shown = all.filter(s=>s.mainHits.length >= f.min);
+    lastHitRows = shown;
+
+    // chance text
+    const cg = f.game==='all' ? ['lotto','euro'] : [f.game];
+    $('#chanceTxt').textContent = cg.map(k=>`${(GAMES[k].mainCount/GAMES[k].mainMax*100).toFixed(1)}% for ${GAMES[k].label}`).join(' and ');
+
+    // summary
+    const totalPicked = all.reduce((a,s)=>a+s.g.mainCount,0);
+    const totalHits = all.reduce((a,s)=>a+s.mainHits.length,0);
+    const totalExpected = all.reduce((a,s)=>a+s.g.mainCount*s.g.mainCount/s.g.mainMax,0);
+    const players = new Set(all.map(s=>s.p.user_id));
+    const best = all.reduce((m,s)=> s.mainHits.length > (m?m.mainHits.length:-1) ? s : m, null);
+    const openCount = preds.filter(p=>!isClosed(p.target_date) && (f.game==='all'||p.game===f.game)).length;
+    const awaiting = pendingDraws().length;
+    $('#sumSub').textContent = `${all.length} scored prediction${all.length===1?'':'s'} in this view${f.min>0?` · ${shown.length} with ${f.min}+ main hits`:''}.`;
+    const tiles = [
+      [all.length, 'Scored predictions', `${players.size} player${players.size===1?'':'s'}`],
+      [totalPicked ? (totalHits/totalPicked*100).toFixed(1)+'%' : '—', 'Overall hit rate', totalPicked ? `chance would give ${(totalExpected/totalPicked*100).toFixed(1)}%` : 'no scored picks yet'],
+      [totalHits, 'Main numbers matched', `chance average ${totalExpected.toFixed(1)}`],
+      [best ? `${best.mainHits.length}/${best.g.mainCount}` : '—', 'Best single line', best ? `${best.name}, ${best.g.short} ${fmtDate(best.p.target_date)}` : ''],
+      [openCount, 'Open predictions', 'not drawn yet'],
+      [awaiting, 'Draws needing a result', awaiting ? 'see bottom of page' : 'all scored']
+    ];
+    $('#tiles').innerHTML = tiles.map(([k,l,s])=>`<div class="tile"><div class="k num">${esc(k)}</div><div class="l">${esc(l)}</div><div class="s">${esc(s)}</div></div>`).join('');
+
+    renderHits(shown);
+    renderPlayers(all);
+    renderPending();
+  }
+
+  function sortRows(rows, sort, getters){
+    const g = getters[sort.key];
+    return rows.slice().sort((a,b)=>{
+      const x=g(a), y=g(b);
+      const c = typeof x==='string' ? x.localeCompare(y) : x-y;
+      return sort.asc ? c : -c;
+    });
+  }
+  function headerHtml(cols, sort){
+    return '<thead><tr>' + cols.map(([key,label,cls])=>`<th data-k="${key}" class="${cls||''}${sort.key===key?' sorted'+(sort.asc?' asc':''):''}">${label}</th>`).join('') + '</tr></thead>';
+  }
+
+  function renderHits(rows){
+    const tbl = $('#hitsTbl');
+    if(!rows.length){ tbl.innerHTML = '<tbody><tr><td class="empty">No predictions match these filters yet.</td></tr></tbody>'; return; }
+    const getters = {
+      name:s=>s.name.toLowerCase(), game:s=>s.p.game, date:s=>s.p.target_date,
+      hits:s=>s.mainHits.length*10 + s.bonusHits.length, bonus:s=>s.bonusHits.length
+    };
+    const sorted = sortRows(rows, hitSort, getters);
+    lastHitRows = sorted;
+    const cols = [['name','Player'],['game','Game'],['date','Draw'],['picks','Their line',''],['hits','Main hits','right'],['bonus','Bonus / stars','right'],['drawn','Actual draw','']];
+    tbl.innerHTML = headerHtml(cols, hitSort) + '<tbody>' + sorted.map(s=>{
+      const star = s.p.game==='euro';
+      const bonusTxt = !s.bonus.length ? '<span class="pill low">not picked</span>' : `${s.bonusHits.length}/${s.g.bonusCount}`;
+      const big = s.mainHits.length >= (s.p.game==='lotto'?3:2);
+      return `<tr>
+        <td>${esc(s.name)}${s.email?`<span class="em">${esc(s.email)}</span>`:''}</td>
+        <td>${s.g.short}</td>
+        <td style="white-space:nowrap">${fmtDate(s.p.target_date)}</td>
+        <td><div class="balls">${ballsHtml(s.p.numbers, s.mainHits)}${s.bonus.length?`<span class="sep">+</span>${ballsHtml(s.bonus, s.bonusHits, star)}`:''}</div></td>
+        <td class="right"><span class="hitcount${big?' big':''}">${s.mainHits.length}/${s.g.mainCount}</span></td>
+        <td class="right">${bonusTxt}</td>
+        <td><div class="balls">${ballsHtml(s.res.main)}<span class="sep">+</span>${ballsHtml(s.res.bonus||[], null, star)}</div></td>
+      </tr>`;
+    }).join('') + '</tbody>';
+    tbl.querySelectorAll('th[data-k]').forEach(th=>{
+      if(!getters[th.dataset.k]) return;
+      th.addEventListener('click', ()=>{ hitSort = { key:th.dataset.k, asc: hitSort.key===th.dataset.k ? !hitSort.asc : false }; render(); });
+    });
+  }
+
+  function renderPlayers(all){
+    const tbl = $('#playersTbl');
+    const by = {};
+    all.forEach(s=>{
+      const t = by[s.p.user_id] = by[s.p.user_id] || { uid:s.p.user_id, name:s.name, email:s.email, draws:0, picked:0, hits:0, expected:0, bonusHits:0, bonusPicked:0, games:new Set() };
+      t.draws++; t.picked += s.g.mainCount; t.hits += s.mainHits.length;
+      t.expected += s.g.mainCount*s.g.mainCount/s.g.mainMax;
+      t.bonusHits += s.bonusHits.length; t.bonusPicked += s.bonus.length; t.games.add(s.g.short);
+    });
+    const rows = Object.values(by).map(t=>{
+      t.rate = t.picked ? t.hits/t.picked : 0;
+      t.chance = t.picked ? t.expected/t.picked : 0;
+      t.ratio = t.expected ? t.hits/t.expected : 0;
+      t.p = binomUpper(t.hits, t.picked, t.chance || 0.1);
+      return t;
+    });
+    if(!rows.length){ tbl.innerHTML = '<tbody><tr><td class="empty">No scored predictions yet.</td></tr></tbody>'; return; }
+    const getters = { name:t=>t.name.toLowerCase(), draws:t=>t.draws, hits:t=>t.hits, rate:t=>t.rate, ratio:t=>t.ratio, p:t=>-t.p };
+    const sorted = sortRows(rows, playerSort, getters);
+    const cols = [['name','Player'],['draws','Draws','right'],['hits','Main hits','right'],['rate','Hit rate'],['ratio','vs chance','right'],['p','Verdict']];
+    tbl.innerHTML = headerHtml(cols, playerSort) + '<tbody>' + sorted.map(t=>{
+      const [v, cls] = verdict(t);
+      const scale = Math.max(0.3, t.rate, t.chance*2);
+      return `<tr>
+        <td>${esc(t.name)}${t.email?`<span class="em">${esc(t.email)}</span>`:''}<span class="em">${[...t.games].join(' · ')}</span></td>
+        <td class="right num">${t.draws}</td>
+        <td class="right num">${t.hits} <span style="color:var(--text-dim)">/ ${t.expected.toFixed(1)} exp.</span></td>
+        <td style="min-width:170px"><div style="display:flex;align-items:center;gap:8px"><span class="num" style="width:48px">${(t.rate*100).toFixed(1)}%</span><div class="bar" style="flex:1"><i style="width:${Math.min(100,t.rate/scale*100)}%"></i><b style="left:${Math.min(100,t.chance/scale*100)}%"></b></div></div></td>
+        <td class="right num">${t.ratio.toFixed(2)}×</td>
+        <td><span class="pill ${cls}">${v}</span>${t.draws>=5?` <span class="em">p = ${t.p<0.001?'<0.001':t.p.toFixed(3)}</span>`:''}</td>
+      </tr>`;
+    }).join('') + '</tbody>';
+    tbl.querySelectorAll('th[data-k]').forEach(th=>{
+      th.addEventListener('click', ()=>{ playerSort = { key:th.dataset.k, asc: playerSort.key===th.dataset.k ? !playerSort.asc : false }; render(); });
+    });
+  }
+
+  function pendingDraws(){
+    const seen = {};
+    preds.forEach(p=>{
+      if(!isClosed(p.target_date) || officialResult(p.game, p.target_date)) return;
+      const k = p.game+'|'+p.target_date;
+      seen[k] = seen[k] || { game:p.game, date:p.target_date, n:0 };
+      seen[k].n++;
+    });
+    return Object.values(seen).sort((a,b)=>b.date.localeCompare(a.date));
+  }
+  function renderPending(){
+    const box = $('#pending');
+    const list = pendingDraws();
+    if(!list.length){ box.innerHTML = '<div class="empty">Nothing waiting — every closed draw with predictions has a result.</div>'; return; }
+    box.innerHTML = '';
+    list.forEach(d=>{
+      const g = GAMES[d.game];
+      const row = document.createElement('div'); row.className='pending-row';
+      row.innerHTML = `<div class="when"><b>${g.label}</b> · ${fmtDate(d.date)}<span>${d.n} prediction${d.n===1?'':'s'} waiting</span></div>
+        <input type="text" class="main" placeholder="${g.mainCount} main numbers">
+        <input type="text" class="bonus" placeholder="${d.game==='lotto'?'Bonus ball':'2 Lucky Stars'}">
+        <button class="btn primary" type="button">Save</button>
+        <div class="status" style="flex-basis:100%"></div>`;
+      const st = row.querySelector('.status');
+      row.querySelector('button').addEventListener('click', async ()=>{
+        const parse = v=>Array.from(new Set(v.split(/[,\s]+/).map(x=>parseInt(x,10)).filter(n=>!isNaN(n))));
+        const main = parse(row.querySelector('.main').value), bonus = parse(row.querySelector('.bonus').value);
+        if(main.length!==g.mainCount || main.some(n=>n<1||n>g.mainMax)){ st.className='status err'; st.textContent=`Enter ${g.mainCount} different numbers from 1 to ${g.mainMax}.`; return; }
+        if(bonus.length!==g.bonusCount || bonus.some(n=>n<1||n>g.bonusMax)){ st.className='status err'; st.textContent=`Enter ${g.bonusCount===1?'the bonus ball':'2 Lucky Stars'} (1 to ${g.bonusMax}).`; return; }
+        const rec = { game:d.game, target_date:d.date, main:main.sort((a,b)=>a-b), entered_by: session.user.id };
+        if(hasBonus) rec.bonus = bonus.sort((a,b)=>a-b);
+        let { error } = await supa.from('results').upsert(rec, { onConflict:'game,target_date' });
+        if(error && /bonus/i.test(error.message||'') && rec.bonus){ hasBonus=false; delete rec.bonus; ({ error } = await supa.from('results').upsert(rec, { onConflict:'game,target_date' })); }
+        if(error){ st.className='status err'; st.textContent='Could not save that result.'; return; }
+        dbResults[d.game][d.date] = { main:rec.main, bonus:rec.bonus||[], source:'entered' };
+        render();
+      });
+      box.appendChild(row);
+    });
+  }
+
+  // ---------- CSV ----------
+  $('#csvBtn').addEventListener('click', ()=>{
+    const head = ['player','email','game','draw_date','picked_main','picked_bonus','drawn_main','drawn_bonus','main_hits','bonus_hits','main_count','locked_at'];
+    const q = v=>{ const s=String(v==null?'':v); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
+    const lines = [head.join(',')].concat(lastHitRows.map(s=>[
+      s.name, s.email, s.g.label, s.p.target_date, s.p.numbers.join(' '), s.bonus.join(' '),
+      s.res.main.join(' '), (s.res.bonus||[]).join(' '), s.mainHits.length, s.bonusHits.length, s.g.mainCount, s.p.created_at||''
+    ].map(q).join(',')));
+    const blob = new Blob([lines.join('\n')], {type:'text/csv'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `draw-room-hits-${londonNow().date}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+  });
+
+  ['#fGame','#fFrom','#fTo','#fMin'].forEach(id=>$(id).addEventListener('change', render));
+  $('#fSearch').addEventListener('input', render);
+  $('#refreshBtn').addEventListener('click', async ()=>{ await loadAll(); render(); });
+
+  let booting = false;
+  async function boot(){
+    if(booting) return; booting = true;
+    try{
+      if(await checkAdmin()){ await loadAll(); render(); }
+    } finally { booting = false; }
+  }
+  boot();
+})();
+</script>
+</body>
+</html>
