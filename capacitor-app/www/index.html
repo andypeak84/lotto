@@ -374,8 +374,29 @@
   /* Bonus ball keeps its number colour, marked with a brass ring */
   .ball.bonus[class*="c-"],.pick.on.bonus{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--brass);}
   .pm-balls .ball.hit{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--teal) !important;}
+  .cs-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;}
+  .cs-tile{background:var(--surface-2);border-radius:12px;padding:12px 14px;}
+  .cs-tile .k{font-family:'Fraunces';font-size:1.45rem;color:var(--brass-strong);}
+  .cs-tile .l{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);}
+  .cs-tile .s{font-size:.76rem;color:var(--text-dim);margin-top:2px;}
+  .cs-tile.you .k{color:var(--teal-strong);}
+  .cs-verdict{padding:12px 14px;border-radius:12px;background:var(--surface-2);border-left:3px solid var(--teal);font-size:.86rem;margin-bottom:14px;}
+  .cs-verdict b{color:var(--teal-strong);}
+  .cs-hist{display:flex;flex-direction:column;gap:6px;}
+  .cs-hrow{display:grid;grid-template-columns:70px 1fr 120px;gap:10px;align-items:center;font-size:.8rem;}
+  .cs-hrow .lab{color:var(--text-dim);}
+  .cs-bars{display:flex;flex-direction:column;gap:3px;}
+  .cs-bars i{display:block;height:8px;border-radius:4px;min-width:2px;}
+  .cs-bars i.obs{background:var(--brass);}
+  .cs-bars i.exp{background:var(--text-dim);opacity:.45;}
+  .cs-hrow .val{font-family:'IBM Plex Mono';font-size:.74rem;color:var(--text-dim);text-align:right;}
+  .cs-hrow .val b{color:var(--text);font-weight:600;}
+  .cs-legend{display:flex;gap:16px;font-size:.74rem;color:var(--text-dim);margin-top:8px;flex-wrap:wrap;}
+  .cs-legend span{display:flex;align-items:center;gap:6px;}
+  .cs-legend i{width:12px;height:8px;border-radius:4px;display:inline-block;}
   @media (max-width:480px){
     .seg button small{display:none;}
+    .cs-hrow{grid-template-columns:52px 1fr 92px;gap:8px;}
     .pt-ticket{gap:5px;padding:10px;}
     .pt-ticket .ball,.slot{width:31px;height:31px;font-size:.8rem;}
     .pt-ticket .plus{margin:0;}
@@ -532,6 +553,10 @@
 
   <h3 class="pt-h3">Leaderboard — <span id="lbGameName">UK Lotto</span></h3>
   <div id="leaderboard" class="leaderboard"></div>
+
+  <h3 class="pt-h3">How everyone is doing — <span id="csGameName">UK Lotto</span></h3>
+  <div class="sub" style="margin-bottom:12px;">Every scored prediction from every player, set against what pure chance would produce. If anyone has a real knack, the community hit rate would sit clearly above the chance line over many draws.</div>
+  <div id="communityStats"></div>
 </section>
 
 <section>
@@ -1351,6 +1376,86 @@
     });
   }
 
+  // ---- Community statistics: everyone's results vs pure chance ----
+  function comb(n,r){ if(r<0||r>n) return 0; let x=1; for(let i=1;i<=r;i++) x=x*(n-r+i)/i; return x; }
+  function hyperP(N,k,h){ return comb(k,h)*comb(N-k,k-h)/comb(N,k); }
+  function pct(x,d){ return (x*100).toFixed(d==null?1:d)+'%'; }
+
+  function tally(list, game){
+    const N=game.mainMax, k=game.mainCount;
+    const t = { n:list.length, hits:0, picked:0, exp:0, variance:0, dist:new Array(k+1).fill(0), best:0, bHits:0, bPicked:0 };
+    const p1 = k/N;
+    list.forEach(({p,sc})=>{
+      const h = sc.mainHits.length;
+      t.hits += h; t.picked += k; t.exp += k*p1; t.dist[h]++; t.best = Math.max(t.best, h);
+      t.variance += k*p1*(1-p1)*(N-k)/(N-1);
+      if(sc.bonusKnown && (p.bonus||[]).length===BONUS[p.game].count){ t.bHits += sc.bonusHits.length; t.bPicked += BONUS[p.game].count; }
+    });
+    t.rate = t.picked ? t.hits/t.picked : 0;
+    t.chance = p1;
+    t.z = t.variance>0 ? (t.hits - t.exp)/Math.sqrt(t.variance) : 0;
+    return t;
+  }
+
+  function renderCommunity(gameKey){
+    const box = $('#communityStats');
+    const game = GAMES[gameKey], bc = BONUS[gameKey];
+    $('#csGameName').textContent = game.label;
+    const scoredAll = ptPreds.filter(p=>p.game===gameKey).map(p=>({p, sc:scorePrediction(p)})).filter(x=>x.sc);
+    if(!scoredAll.length){
+      box.innerHTML = `<div class="circle-empty">No scored ${game.label} predictions yet. Stats appear here once the first draw result is in.</div>`;
+      return;
+    }
+    const all = tally(scoredAll, game);
+    const mineList = myId ? scoredAll.filter(x=>x.p.user_id===myId) : [];
+    const mine = mineList.length ? tally(mineList, game) : null;
+    const players = new Set(scoredAll.map(x=>x.p.user_id)).size;
+    const draws = new Set(scoredAll.map(x=>x.p.target_date)).size;
+
+    const tiles = [
+      { k:pct(all.rate), l:'Community hit rate', s:`chance gives ${pct(all.chance)}` },
+      mine ? { cls:'you', k:pct(mine.rate), l:'Your hit rate', s: mine.n<5 ? `${mine.n} draw${mine.n===1?'':'s'} so far — too early to tell` : `over ${mine.n} draws · community ${pct(all.rate)}` }
+           : { cls:'you', k:'—', l:'Your hit rate', s: myId ? 'no scored predictions yet' : 'sign in to see yours' },
+      { k:`${all.hits} / ${all.exp.toFixed(1)}`, l:'Hits vs expected', s:'actual vs chance average' },
+      { k:`${all.best}/${game.mainCount}`, l:'Best line so far', s:`${all.n} lines · ${players} player${players===1?'':'s'} · ${draws} draw${draws===1?'':'s'}` }
+    ];
+    if(all.bPicked){
+      const bChance = gameKey==='lotto' ? 1/59 : 2/12;
+      tiles.push({ k:pct(all.bHits/all.bPicked), l:bc.name+' hit rate', s:`chance gives ${pct(bChance)}` });
+    }
+
+    let verdict;
+    if(all.n < 30){
+      verdict = `<b>Too early to tell.</b> There are only ${all.n} scored line${all.n===1?'':'s'}. With a sample this small, a high or low hit rate says almost nothing — luck swings wildly. The picture gets meaningful at around 30+ lines.`;
+    } else if(all.z >= 2.33){
+      verdict = `<b>Above chance.</b> The community is hitting ${all.hits} against ${all.exp.toFixed(1)} expected (${all.z.toFixed(1)} standard deviations above average). That is unlikely to be pure luck — worth keeping an eye on as more draws come in.`;
+    } else if(all.z <= -2.33){
+      verdict = `<b>Below chance.</b> The community is hitting ${all.hits} against ${all.exp.toFixed(1)} expected — fewer than random picks would manage, which is itself just a quirk of the sample.`;
+    } else {
+      verdict = `<b>In line with chance.</b> ${all.hits} hits against ${all.exp.toFixed(1)} expected (${all.z>=0?'+':''}${all.z.toFixed(1)} standard deviations). That is what pure luck looks like — so far nobody’s picks beat random.`;
+    }
+
+    // distribution of hits per line: observed vs expected
+    const k = game.mainCount, N = game.mainMax;
+    const rows = [];
+    for(let h=0; h<=k; h++){
+      const e = hyperP(N,k,h), o = all.dist[h]/all.n;
+      rows.push({h, e, o, oc:all.dist[h], ec:e*all.n});
+    }
+    const maxShare = Math.max(...rows.map(r=>Math.max(r.e, r.o)), 0.01);
+    const hist = rows.map(r=>`<div class="cs-hrow">
+        <span class="lab">${r.h} hit${r.h===1?'':'s'}</span>
+        <div class="cs-bars"><i class="obs" style="width:${(r.o/maxShare*100).toFixed(1)}%"></i><i class="exp" style="width:${(r.e/maxShare*100).toFixed(1)}%"></i></div>
+        <span class="val"><b>${r.oc}</b> line${r.oc===1?'':'s'} · exp. ${r.ec<0.1&&r.ec>0?'<0.1':r.ec.toFixed(1)}</span>
+      </div>`).join('');
+
+    box.innerHTML = `
+      <div class="cs-tiles">${tiles.map(t=>`<div class="cs-tile ${t.cls||''}"><div class="k num">${t.k}</div><div class="l">${t.l}</div><div class="s">${t.s}</div></div>`).join('')}</div>
+      <div class="cs-verdict">${verdict}</div>
+      <div class="cs-hist">${hist}</div>
+      <div class="cs-legend"><span><i style="background:var(--brass)"></i>What players actually got</span><span><i style="background:var(--text-dim);opacity:.45"></i>What random picks would give</span></div>`;
+  }
+
   async function refreshPredictions(gameKey){
     const [{ data: preds }, { data: results }] = await Promise.all([
       supa.from('predictions').select('*').limit(1000),
@@ -1365,6 +1470,7 @@
     renderPicker();
     renderMine();
     renderLeaderboard(gameKey);
+    renderCommunity(gameKey);
   }
 
   function subscribePredictions(gameKey){
