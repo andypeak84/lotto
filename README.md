@@ -78,7 +78,18 @@ Project **`draw-room`** — id `talubhstvuqluwaztllv`, region ap-southeast-1, in
 |---|---|
 | `profiles` | One row per user; `is_admin` flag, auto-set on signup for `artifarty@tutamail.com`. |
 | `circles`, `circle_members` | Focus Circles — purely social, never affects odds. |
-| `predictions`, `results` | The Prediction Test. Result entry is admin-only, enforced by RLS. |
+| `predictions`, `results` | The Prediction Test. Real results are fetched automatically (see below); manual entry is an admin-only fallback, enforced by RLS. |
+| `sync_log` | Throttle bookkeeping for the results sync. Not readable by clients. |
+
+### Automatic results
+
+A Postgres function, `sync_results_internal()`, reads the official National Lottery results feed (the same XML the National Lottery site uses) from inside Supabase, validates it, and upserts into `results`. A `pg_cron` job (`sync-official-results`) runs it every 15 minutes. Signed-in users can also trigger a throttled refresh from the site ("Check for the result now"), which also happens automatically when a draw they predicted has closed but its result isn't in yet.
+
+The feed only exposes the latest draw, so the job needs to keep running to avoid gaps. To check it: `select jobname, schedule, active from cron.job;` and `select * from sync_log;`.
+
+### Prediction integrity
+
+A database trigger on `predictions` rejects any prediction for a draw whose sales have already closed (7:30pm UK time for both games), for a draw that already has a result, for a non-draw day, or with invalid numbers. This holds even for someone calling the API directly, so the test can't be gamed after the fact.
 | `quiz_history` | Intuition Quiz results, private per user (`user_id = auth.uid()`). |
 
 All tables have Row Level Security on. The anon key embedded in `index.html` is safe to ship publicly — RLS is what protects the data, same model as a Firebase web key.
@@ -88,6 +99,8 @@ Sign-in is email magic-link (OTP). No passwords stored.
 ## Design notes
 
 - **Lotto stats** use only the current 6/59 format (from Oct 2015) — the 6/49 era isn't comparable.
+- **Lotto changed again on 10 June 2026:** each draw now has **two rounds** (two sets of six numbers plus a bonus ball), and every ticket is checked against both. The Prediction Test handles this — a Lotto ticket is scored against both rounds and the chance baseline doubles to match. `draws.json` only holds one set per draw from that date, which is fine for number-frequency stats but isn't a full record of the new format.
+- `draws.json` currently ends in mid-September 2026; it is a static snapshot and is not updated by the results sync.
 - **EuroMillions Lucky Star stats** use only the stable 1–12 era (from Sep 2016). The star pool grew 9 → 11 → 12 over time; including the earlier draws made stars 10–12 look "cold" and produced a bogus p < 0.0001. Restricted to the stable era, p = 0.19 — i.e. no signal, which is the correct answer.
 - The chi-square test is computed client-side with a Wilson–Hilferty approximation, so there's no stats library dependency.
 - The generator's "hot"/"cold"/"balanced" modes are presented as *styles of picking*, not edges. The app says plainly, in several places, that none of them change the odds — because they don't.

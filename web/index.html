@@ -360,6 +360,23 @@
     padding:5px 10px;font-size:.74rem;cursor:pointer;font-family:'Inter';
   }
 
+  .ydc{border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:14px 16px;margin:0 0 18px;}
+  .ydc[hidden]{display:none;}
+  .ydc-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .ydc-head b{font-size:.95rem;}
+  .ydc-head span{font-size:.74rem;color:var(--text-dim);}
+  .ydc-line{padding:8px 0;border-top:1px solid var(--line);}
+  .ydc-line:first-of-type{border-top:0;}
+  .ydc-lab{font-size:.72rem;color:var(--text-dim);margin-bottom:4px;}
+  .ydc-balls{display:flex;gap:4px;flex-wrap:wrap;align-items:center;}
+  .ydc-balls .ball{width:28px;height:28px;font-size:.74rem;}
+  .ydc-balls .ball.hit{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--teal);}
+  .ydc-balls .ball.miss{opacity:.35;}
+  .ydc-sep{width:8px;}
+  .ydc-sum{font-size:.84rem;margin-top:8px;}
+  .ydc-foot{font-size:.72rem;color:var(--text-dim);margin-top:6px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .ydc-foot button{border:1px solid var(--line);background:var(--surface-2);color:var(--text);border-radius:8px;padding:4px 10px;font-size:.74rem;cursor:pointer;font-family:'Inter';}
+
   #resultEntry input[type=date]{
     padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);
     color:var(--text);font-family:'Inter';font-size:.85rem;color-scheme:light dark;
@@ -504,7 +521,8 @@
 
 <section>
   <h2>Prediction Test</h2>
-  <div class="sub">A real, falsifiable test — if anyone has a knack, this is where it would show up. Lock in numbers before a draw; once the real result is in, everyone's hit-rate is measured against what pure chance predicts.</div>
+  <div id="yourDrawCard" class="ydc" hidden></div>
+  <div class="sub">A real, falsifiable test — if anyone has a knack, this is where it would show up. Lock in numbers before a draw; once the real result is in (fetched automatically from the official National Lottery feed), everyone's hit-rate is measured against what pure chance predicts.</div>
 
   <div class="pt-step">
     <div class="pt-label">Game</div>
@@ -1142,17 +1160,29 @@
   // Official results: draws.json first, then any admin-entered results.
   function resultFor(gameKey, date){
     const fromDb = ptResults[gameKey] && ptResults[gameKey][date];
+    if(fromDb && fromDb.rounds && fromDb.rounds.length) return fromDb;   // official feed: every round
     const row = GAMES[gameKey].rows.find(r=>r.date===date);
     if(row) return { main: row.main, bonus: gameKey==='lotto' ? [row.bonus] : row.stars };
     return fromDb || null;
   }
+  // A result as a list of rounds. Since 10 Jun 2026 UK Lotto draws two rounds and every
+  // ticket is checked against both; each (prediction, round) pair is one scored "line".
+  function roundsOf(res, gameKey){
+    if(res.rounds && res.rounds.length) return res.rounds.map(r=>({ main:r.main, bonus: gameKey==='lotto' ? (r.bonus!=null?[r.bonus]:[]) : (r.stars||[]) }));
+    return [{ main:res.main, bonus:res.bonus||[] }];
+  }
   function scorePrediction(p){
     const res = resultFor(p.game, p.target_date);
     if(!res) return null;
-    const mainHits = p.numbers.filter(n=>res.main.includes(n));
     const bonus = p.bonus || [];
-    const bonusHits = (res.bonus && res.bonus.length) ? bonus.filter(n=>res.bonus.includes(n)) : [];
-    return { res, mainHits, bonusHits, bonusKnown: !!(res.bonus && res.bonus.length) };
+    const lines = roundsOf(res, p.game).map(r=>({
+      r,
+      mainHits: p.numbers.filter(n=>r.main.includes(n)),
+      bonusHits: (r.bonus && r.bonus.length) ? bonus.filter(n=>r.bonus.includes(n)) : [],
+      bonusKnown: !!(r.bonus && r.bonus.length)
+    }));
+    const best = lines.reduce((a,b)=> b.mainHits.length>a.mainHits.length ? b : a);
+    return { res, lines, mainHits: best.mainHits, bonusHits: best.bonusHits, bonusKnown: best.bonusKnown };
   }
 
   // ---- picker rendering ----
@@ -1306,8 +1336,10 @@
       let state;
       if(sc){
         const exp = expectedHits(game).toFixed(2);
-        const bonusTxt = sc.bonusKnown && (p.bonus||[]).length ? ` · ${bc.name.toLowerCase()}: <b>${sc.bonusHits.length}/${bc.count}</b>` : '';
-        state = `Matched <b>${sc.mainHits.length} of ${game.mainCount}</b>${bonusTxt}<br>chance average ${exp}`;
+        state = sc.lines.map((l,i)=>{
+          const bonusTxt = l.bonusKnown && (p.bonus||[]).length ? ` · ${bc.name.toLowerCase()}: <b>${l.bonusHits.length}/${bc.count}</b>` : '';
+          return `${sc.lines.length>1?`Round ${i+1}: `:''}matched <b>${l.mainHits.length} of ${game.mainCount}</b>${bonusTxt}`;
+        }).join('<br>') + `<br>chance average ${exp} per round`;
       } else if(open){
         state = 'Open — editable until 7:30pm UK';
       } else {
@@ -1349,10 +1381,12 @@
       const sc = scorePrediction(p);
       if(!sc) return;
       const t = totals[p.user_id] = totals[p.user_id] || {hits:0, expected:0, n:0, bHits:0, bExpected:0};
-      t.hits += sc.mainHits.length;
-      t.expected += expectedHits(game);
       t.n += 1;
-      if(sc.bonusKnown && (p.bonus||[]).length===bc.count){ t.bHits += sc.bonusHits.length; t.bExpected += expectedBonusHits(gameKey); }
+      sc.lines.forEach(l=>{
+        t.hits += l.mainHits.length;
+        t.expected += expectedHits(game);
+        if(l.bonusKnown && (p.bonus||[]).length===bc.count){ t.bHits += l.bonusHits.length; t.bExpected += expectedBonusHits(gameKey); }
+      });
     });
 
     const rows = Object.entries(totals).map(([uid,t])=>({uid, ...t, ratio: t.expected>0 ? t.hits/t.expected : 0}));
@@ -1383,13 +1417,17 @@
 
   function tally(list, game){
     const N=game.mainMax, k=game.mainCount;
-    const t = { n:list.length, hits:0, picked:0, exp:0, variance:0, dist:new Array(k+1).fill(0), best:0, bHits:0, bPicked:0 };
+    const t = { n:0, hits:0, picked:0, exp:0, variance:0, dist:new Array(k+1).fill(0), best:0, bHits:0, bPicked:0 };
     const p1 = k/N;
+    t.n = 0;
     list.forEach(({p,sc})=>{
-      const h = sc.mainHits.length;
-      t.hits += h; t.picked += k; t.exp += k*p1; t.dist[h]++; t.best = Math.max(t.best, h);
-      t.variance += k*p1*(1-p1)*(N-k)/(N-1);
-      if(sc.bonusKnown && (p.bonus||[]).length===BONUS[p.game].count){ t.bHits += sc.bonusHits.length; t.bPicked += BONUS[p.game].count; }
+      sc.lines.forEach(l=>{
+        const h = l.mainHits.length;
+        t.n++;
+        t.hits += h; t.picked += k; t.exp += k*p1; t.dist[h]++; t.best = Math.max(t.best, h);
+        t.variance += k*p1*(1-p1)*(N-k)/(N-1);
+        if(l.bonusKnown && (p.bonus||[]).length===BONUS[p.game].count){ t.bHits += l.bonusHits.length; t.bPicked += BONUS[p.game].count; }
+      });
     });
     t.rate = t.picked ? t.hits/t.picked : 0;
     t.chance = p1;
@@ -1414,7 +1452,7 @@
 
     const tiles = [
       { k:pct(all.rate), l:'Community hit rate', s:`chance gives ${pct(all.chance)}` },
-      mine ? { cls:'you', k:pct(mine.rate), l:'Your hit rate', s: mine.n<5 ? `${mine.n} draw${mine.n===1?'':'s'} so far — too early to tell` : `over ${mine.n} draws · community ${pct(all.rate)}` }
+      mine ? { cls:'you', k:pct(mine.rate), l:'Your hit rate', s: mine.n<5 ? `${mine.n} line${mine.n===1?'':'s'} so far — too early to tell` : `over ${mine.n} lines · community ${pct(all.rate)}` }
            : { cls:'you', k:'—', l:'Your hit rate', s: myId ? 'no scored predictions yet' : 'sign in to see yours' },
       { k:`${all.hits} / ${all.exp.toFixed(1)}`, l:'Hits vs expected', s:'actual vs chance average' },
       { k:`${all.best}/${game.mainCount}`, l:'Best line so far', s:`${all.n} lines · ${players} player${players===1?'':'s'} · ${draws} draw${draws===1?'':'s'}` }
@@ -1456,6 +1494,72 @@
       <div class="cs-legend"><span><i style="background:var(--brass)"></i>What players actually got</span><span><i style="background:var(--text-dim);opacity:.45"></i>What random picks would give</span></div>`;
   }
 
+  // ---- "Your prediction vs the real draw" card (top of the Prediction Test) ----
+  let lastSyncAt = 0, syncing = false, syncNote = '';
+  async function requestSync(force){
+    if(!myId || syncing) return;
+    if(!force && Date.now()-lastSyncAt < 90000) return;
+    syncing = true; lastSyncAt = Date.now(); syncNote = 'Checking the official results…'; renderYourDrawCard();
+    try{
+      const { data, error } = await supa.rpc('sync_results');
+      if(error) throw error;
+      syncNote = 'Checked just now.';
+    }catch(e){ syncNote = 'Could not reach the results feed just now — it retries automatically.'; }
+    syncing = false;
+    await refreshPredictions(pt.game);
+  }
+  function ydcPick(){
+    const mine = ptPreds.filter(p=>p.user_id===myId);
+    if(!mine.length) return null;
+    const closed = mine.filter(p=>!isOpen(p.target_date)).sort((a,b)=>b.target_date.localeCompare(a.target_date));
+    if(closed.length) return closed[0];
+    return mine.slice().sort((a,b)=>a.target_date.localeCompare(b.target_date))[0];
+  }
+  function renderYourDrawCard(){
+    const box = $('#yourDrawCard');
+    if(!box) return;
+    const p = myId ? ydcPick() : null;
+    if(!p){ box.hidden = true; box.innerHTML=''; return; }
+    const game = GAMES[p.game], bc = BONUS[p.game];
+    const sc = scorePrediction(p);
+    const open = isOpen(p.target_date);
+    const mineBonus = p.bonus||[];
+    const title = `${game.label} · ${fmtDate(p.target_date,{weekday:'long',day:'numeric',month:'long'})}`;
+    let body = '', tag = '', foot = '';
+    const yours = `<div class="ydc-line"><div class="ydc-lab">Your numbers</div><div class="ydc-balls">${ballsHtml(p.numbers,'',sc&&sc.lines.reduce((a,l)=>a.concat(l.mainHits),[]))}${mineBonus.length?'<span class="ydc-sep"></span>'+ballsHtml(mineBonus,bc.cls,sc&&sc.lines.reduce((a,l)=>a.concat(l.bonusHits),[])):''}</div></div>`;
+    if(sc){
+      tag = (sc.res.source==='official' ? 'Official result' : 'Result');
+      const exp = expectedHits(game);
+      body = yours + sc.lines.map((l,i)=>{
+        const drawn = l.r.main.slice().sort((a,b)=>a-b).map(n=>`<span class="ball ${ballColor(n)}${p.numbers.includes(n)?' hit':' miss'}">${n}</span>`).join('');
+        const bon = (l.r.bonus||[]).map(n=>p.game==='lotto'
+          ? `<span class="ball bonus ${ballColor(n)}${mineBonus.includes(n)?' hit':' miss'}">${n}</span>`
+          : `<span class="ball star${mineBonus.includes(n)?' hit':' miss'}">${n}</span>`).join('');
+        const bt = l.bonusKnown && mineBonus.length ? ` · ${bc.name.toLowerCase()} <b>${l.bonusHits.length}/${bc.count}</b>` : '';
+        return `<div class="ydc-line"><div class="ydc-lab">${sc.lines.length>1?`Round ${i+1} drawn`:'Drawn'} — you matched <b>${l.mainHits.length} of ${game.mainCount}</b>${bt}</div><div class="ydc-balls">${drawn}${bon?'<span class="ydc-sep"></span>'+bon:''}</div></div>`;
+      }).join('');
+      const total = sc.lines.reduce((a,l)=>a+l.mainHits.length,0);
+      body += `<div class="ydc-sum">Total main-number hits: <b>${total}</b> · pure chance averages <b>${(exp*sc.lines.length).toFixed(2)}</b> for this ticket.</div>`;
+      foot = `<span>${sc.res.draw_number?`Draw ${sc.res.draw_number} · `:''}fetched from the official National Lottery results.</span>`;
+    } else if(open){
+      tag = 'Locked in';
+      body = yours + `<div class="ydc-sum">The draw hasn’t happened yet. You can change these until 7:30pm UK time on the day; after that they’re frozen and compared with the real result automatically.</div>`;
+    } else {
+      tag = 'Waiting for the result';
+      body = yours + `<div class="ydc-sum">Sales have closed. The official result usually lands within a couple of hours of the draw — this card updates itself.</div>`;
+      foot = `<button type="button" id="ydcCheck">Check for the result now</button><span>${syncNote||''}</span>`;
+    }
+    box.innerHTML = `<div class="ydc-head"><b>${title}</b><span>${tag}</span></div>${body}${foot?`<div class="ydc-foot">${foot}</div>`:''}`;
+    box.hidden = false;
+    const b = $('#ydcCheck'); if(b) b.addEventListener('click', ()=>requestSync(true));
+  }
+  function ydcNeedsResult(){
+    return !!ptPreds.some(p=>p.user_id===myId && !isOpen(p.target_date) && !resultFor(p.game,p.target_date));
+  }
+  // Keep the card honest: re-evaluate every minute; while a closed draw has no result yet, ask the server to check every 2 minutes.
+  setInterval(()=>{ renderYourDrawCard(); renderMine(); }, 60000);
+  setInterval(()=>{ if(myId && ydcNeedsResult()) requestSync(false); }, 120000);
+
   async function refreshPredictions(gameKey){
     const [{ data: preds }, { data: results }] = await Promise.all([
       supa.from('predictions').select('*').limit(1000),
@@ -1464,13 +1568,15 @@
     ptPreds = preds || [];
     if(ptPreds.length && !('bonus' in ptPreds[0])) hasBonusColumn = false;
     ptResults = {lotto:{}, euro:{}};
-    (results||[]).forEach(r=>{ if(ptResults[r.game]) ptResults[r.game][r.target_date] = { main:r.main, bonus:r.bonus||[] }; });
+    (results||[]).forEach(r=>{ if(ptResults[r.game]) ptResults[r.game][r.target_date] = { main:r.main, bonus:r.bonus||[], rounds:r.rounds||null, source:r.source||'manual', draw_number:r.draw_number||null }; });
     // If the current pick is empty, pre-fill with an existing prediction for this draw.
     if(!pt.main.length && !pt.bonus.length) loadExistingPick();
     renderPicker();
     renderMine();
+    renderYourDrawCard();
     renderLeaderboard(gameKey);
     renderCommunity(gameKey);
+    if(ydcNeedsResult()) requestSync(false);
   }
 
   function subscribePredictions(gameKey){
@@ -1507,7 +1613,7 @@
         ({ error } = await supa.from('predictions').upsert(row, { onConflict: 'user_id,game,target_date' }));
       }
       if(error) throw error;
-      setStatus(`Locked in for ${game.label}, ${fmtDate(pt.date,{weekday:'long',day:'numeric',month:'long'})}. You can change it until 7:30pm UK time that day.`, 'ok');
+      setStatus(`Locked in for ${game.label}, ${fmtDate(pt.date,{weekday:'long',day:'numeric',month:'long'})}. You can change it until 7:30pm UK time that day — then it’s compared with the real result automatically.`, 'ok');
       await refreshPredictions(pt.game);
     }catch(e){
       setStatus(/closed|locked/i.test(e.message||'') ? 'Predictions for that draw have closed.' : 'Could not lock that in right now.', 'err');
@@ -1523,7 +1629,7 @@
     if(!date){ status.textContent='Pick the draw date.'; return; }
     if(!nums){ status.textContent = `Enter exactly ${game.mainCount} distinct main numbers between 1 and ${game.mainMax}.`; return; }
     if(bonusNums.length!==bc.count || bonusNums.some(n=>n<1||n>bc.max)){ status.textContent = `Enter ${bc.count} ${bc.name.toLowerCase()} between 1 and ${bc.max}.`; return; }
-    const row = { game: pt.game, target_date: date, main: nums, entered_by: myId };
+    const row = { game: pt.game, target_date: date, main: nums, entered_by: myId, source: 'manual', rounds: null };
     if(hasBonusColumn) row.bonus = bonusNums.sort((a,b)=>a-b);
     try{
       const { error } = await supa.from('results').upsert(row, { onConflict: 'game,target_date' });
