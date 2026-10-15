@@ -181,6 +181,15 @@
   </section>
 
   <section>
+    <h2>Intuition vs results</h2>
+    <div class="sub">Players grouped by their welcome-quiz score (8–40). If gut feeling were worth anything, the higher groups would sit above the chance line.</div>
+    <div class="tbl-wrap"><table id="groupsTbl"></table></div>
+    <div class="sub" style="margin:16px 0 8px;">Grouped by how they say they pick numbers (a player can be in several groups).</div>
+    <div class="tbl-wrap"><table id="methodsTbl"></table></div>
+    <p class="note" id="onbNote"></p>
+  </section>
+
+  <section>
     <h2>Draws waiting for a result</h2>
     <div class="sub">Closed draws that have predictions but no result yet. Enter the official numbers to score them.</div>
     <div id="pending"></div>
@@ -289,7 +298,7 @@
   }
 
   // ---------- data ----------
-  let DRAWS = null, preds = [], dbResults = {}, people = {}, emails = {}, hasBonus = true;
+  let DRAWS = null, preds = [], dbResults = {}, people = {}, emails = {}, hasBonus = true, onb = {}, onbOk = false;
   async function loadAll(){
     if(!DRAWS){
       try{ DRAWS = await (await fetch('draws.json')).json(); }catch(e){ DRAWS = {lotto:[], euro:[]}; }
@@ -304,6 +313,11 @@
     dbResults = {lotto:{}, euro:{}};
     (rs.data||[]).forEach(r=>{ if(dbResults[r.game]) dbResults[r.game][r.target_date] = { main:r.main, bonus:r.bonus||[], source:'entered' }; });
     people = {}; (pf.data||[]).forEach(p=> people[p.id] = p.display_name || '');
+    onb = {}; onbOk = false;
+    try{
+      const o = await supa.from('onboarding').select('*').limit(5000);
+      if(!o.error){ onbOk = true; (o.data||[]).forEach(r=> onb[r.user_id] = r); }
+    }catch(e){}
     try{
       const { data, error } = await supa.rpc('admin_user_emails');
       if(!error) (data||[]).forEach(r=> emails[r.id] = r.email);
@@ -377,6 +391,7 @@
 
     renderHits(shown);
     renderPlayers(all);
+    renderGroups(all);
     renderPending();
   }
 
@@ -422,8 +437,11 @@
     });
   }
 
-  function renderPlayers(all){
-    const tbl = $('#playersTbl');
+  const ARCHETYPES = [[16,'Skeptic'],[24,'Curious'],[32,'Dreamer'],[40,'Full Mystic']];
+  function archetype(score){ return (ARCHETYPES.find(a=>score<=a[0])||ARCHETYPES[3])[1]; }
+  const METHOD_LABELS = { dates:'Birthdays & dates', dip:'Lucky dip', same:'Same numbers every time', stats:'Hot / cold stats', gut:'Gut feeling', signs:'Dreams or signs' };
+
+  function playerTotals(all){
     const by = {};
     all.forEach(s=>{
       const t = by[s.p.user_id] = by[s.p.user_id] || { uid:s.p.user_id, name:s.name, email:s.email, draws:0, picked:0, hits:0, expected:0, bonusHits:0, bonusPicked:0, games:new Set() };
@@ -431,22 +449,28 @@
       t.expected += s.g.mainCount*s.g.mainCount/s.g.mainMax;
       t.bonusHits += s.bonusHits.length; t.bonusPicked += s.bonus.length; t.games.add(s.g.short);
     });
-    const rows = Object.values(by).map(t=>{
+    return Object.values(by).map(t=>{
       t.rate = t.picked ? t.hits/t.picked : 0;
       t.chance = t.picked ? t.expected/t.picked : 0;
       t.ratio = t.expected ? t.hits/t.expected : 0;
       t.p = binomUpper(t.hits, t.picked, t.chance || 0.1);
       return t;
     });
+  }
+
+  function renderPlayers(all){
+    const tbl = $('#playersTbl');
+    const rows = playerTotals(all);
     if(!rows.length){ tbl.innerHTML = '<tbody><tr><td class="empty">No scored predictions yet.</td></tr></tbody>'; return; }
-    const getters = { name:t=>t.name.toLowerCase(), draws:t=>t.draws, hits:t=>t.hits, rate:t=>t.rate, ratio:t=>t.ratio, p:t=>-t.p };
+    const getters = { name:t=>t.name.toLowerCase(), draws:t=>t.draws, hits:t=>t.hits, rate:t=>t.rate, ratio:t=>t.ratio, p:t=>-t.p, intu:t=>(onb[t.uid]&&onb[t.uid].quiz_score)||0 };
     const sorted = sortRows(rows, playerSort, getters);
-    const cols = [['name','Player'],['draws','Draws','right'],['hits','Main hits','right'],['rate','Hit rate'],['ratio','vs chance','right'],['p','Verdict']];
+    const cols = [['name','Player'],['intu','Intuition','right'],['draws','Draws','right'],['hits','Main hits','right'],['rate','Hit rate'],['ratio','vs chance','right'],['p','Verdict']];
     tbl.innerHTML = headerHtml(cols, playerSort) + '<tbody>' + sorted.map(t=>{
       const [v, cls] = verdict(t);
       const scale = Math.max(0.3, t.rate, t.chance*2);
       return `<tr>
         <td>${esc(t.name)}${t.email?`<span class="em">${esc(t.email)}</span>`:''}<span class="em">${[...t.games].join(' · ')}</span></td>
+        <td class="right num">${onb[t.uid]&&onb[t.uid].quiz_score!=null ? `${onb[t.uid].quiz_score}<span class="em">${archetype(onb[t.uid].quiz_score)}</span>` : '<span style="color:var(--text-dim)">—</span>'}</td>
         <td class="right num">${t.draws}</td>
         <td class="right num">${t.hits} <span style="color:var(--text-dim)">/ ${t.expected.toFixed(1)} exp.</span></td>
         <td style="min-width:170px"><div style="display:flex;align-items:center;gap:8px"><span class="num" style="width:48px">${(t.rate*100).toFixed(1)}%</span><div class="bar" style="flex:1"><i style="width:${Math.min(100,t.rate/scale*100)}%"></i><b style="left:${Math.min(100,t.chance/scale*100)}%"></b></div></div></td>
@@ -457,6 +481,41 @@
     tbl.querySelectorAll('th[data-k]').forEach(th=>{
       th.addEventListener('click', ()=>{ playerSort = { key:th.dataset.k, asc: playerSort.key===th.dataset.k ? !playerSort.asc : false }; render(); });
     });
+  }
+
+  function groupRow(label, members){
+    const g = { label, players:members.length, lines:0, picked:0, hits:0, expected:0 };
+    members.forEach(t=>{ g.lines+=t.draws; g.picked+=t.picked; g.hits+=t.hits; g.expected+=t.expected; });
+    g.rate = g.picked ? g.hits/g.picked : 0;
+    g.chance = g.picked ? g.expected/g.picked : 0;
+    g.ratio = g.expected ? g.hits/g.expected : 0;
+    g.p = g.picked ? binomUpper(g.hits, g.picked, g.chance||0.1) : 1;
+    return g;
+  }
+  function groupTable(tbl, groups){
+    tbl.innerHTML = '<thead><tr><th>Group</th><th class="right">Players</th><th class="right">Lines</th><th>Hit rate</th><th class="right">vs chance</th><th>Verdict</th></tr></thead><tbody>' + groups.map(g=>{
+      if(!g.players) return `<tr><td>${esc(g.label)}</td><td class="right num">0</td><td colspan="4"><span class="pill low">nobody yet</span></td></tr>`;
+      const [v, cls] = verdict({ draws: g.lines>=30 ? g.lines : 0, rate:g.rate, chance:g.chance, p:g.p });
+      return `<tr><td>${esc(g.label)}</td><td class="right num">${g.players}</td><td class="right num">${g.lines}</td>
+        <td class="num">${(g.rate*100).toFixed(1)}% <span style="color:var(--text-dim)">vs ${(g.chance*100).toFixed(1)}%</span></td>
+        <td class="right num">${g.ratio.toFixed(2)}×</td><td><span class="pill ${cls}">${v}</span></td></tr>`;
+    }).join('') + '</tbody>';
+  }
+  function renderGroups(all){
+    const totals = playerTotals(all);
+    const note = $('#onbNote');
+    if(!onbOk){
+      $('#groupsTbl').innerHTML = ''; $('#methodsTbl').innerHTML = '';
+      note.textContent = 'Welcome-question answers aren’t available yet — run the latest SQL file in Supabase to create the onboarding table.';
+      return;
+    }
+    const withQuiz = totals.filter(t=>onb[t.uid] && onb[t.uid].quiz_score!=null);
+    const answered = Object.values(onb).length;
+    const defs = [['Skeptic (8–16)',8,16],['Curious (17–24)',17,24],['Dreamer (25–32)',25,32],['Full Mystic (33–40)',33,40]];
+    groupTable($('#groupsTbl'), defs.map(([label,lo,hi])=> groupRow(label, withQuiz.filter(t=>{ const sc=onb[t.uid].quiz_score; return sc>=lo && sc<=hi; }))));
+    const withMethods = totals.filter(t=>onb[t.uid]);
+    groupTable($('#methodsTbl'), Object.keys(METHOD_LABELS).map(k=> groupRow(METHOD_LABELS[k], withMethods.filter(t=>(onb[t.uid].pick_methods||[]).includes(k)))));
+    note.textContent = `${answered} player${answered===1?'':'s'} have answered the welcome questions; ${withQuiz.length} of them also have scored predictions in this view. Small groups swing wildly — treat anything under ~30 lines as noise.`;
   }
 
   function pendingDraws(){

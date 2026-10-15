@@ -411,6 +411,29 @@
   .cs-legend{display:flex;gap:16px;font-size:.74rem;color:var(--text-dim);margin-top:8px;flex-wrap:wrap;}
   .cs-legend span{display:flex;align-items:center;gap:6px;}
   .cs-legend i{width:12px;height:8px;border-radius:4px;display:inline-block;}
+  /* ---- Welcome / onboarding ---- */
+  .onb-overlay{position:fixed;inset:0;z-index:50;background:rgba(20,17,10,.55);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;}
+  .onb-card{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);width:100%;max-width:580px;padding:22px;margin:auto;}
+  .onb-card h2{font-size:1.3rem;margin-bottom:6px;}
+  .onb-notice{padding:12px 14px;border-radius:12px;background:var(--surface-2);border-left:3px solid var(--brass);font-size:.84rem;color:var(--text);margin:12px 0 18px;}
+  .onb-group{margin-bottom:18px;}
+  .onb-group > .pt-label{margin-bottom:8px;}
+  .onb-check{display:flex;gap:10px;align-items:flex-start;font-size:.9rem;cursor:pointer;}
+  .onb-check input{accent-color:var(--teal);width:18px;height:18px;margin-top:2px;flex:none;}
+  .onb-input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--text);font-family:'Inter';font-size:.9rem;}
+  .onb-chips{display:flex;gap:8px;flex-wrap:wrap;}
+  .onb-chip{padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--text);font-size:.82rem;cursor:pointer;font-family:'Inter';}
+  .onb-chip.on{background:var(--teal);border-color:var(--teal);color:#fff;}
+  :root:not([data-theme="light"]) .onb-chip.on{color:#0c1512;}
+  :root[data-theme="dark"] .onb-chip.on{color:#0c1512;}
+  .onb-q{margin-bottom:14px;}
+  .onb-q .qtext{font-size:.88rem;margin-bottom:6px;}
+  .onb-q .quiz-scale{flex-wrap:nowrap;gap:5px;}
+  .onb-q .quiz-opt{min-width:0;padding:9px 2px;}
+  .onb-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px;}
+  .onb-actions button:disabled{opacity:.45;cursor:not-allowed;}
+  .onb-status{font-size:.82rem;color:var(--text-dim);}
+  .onb-status.err{color:var(--red);}
   @media (max-width:480px){
     .seg button small{display:none;}
     .cs-hrow{grid-template-columns:52px 1fr 92px;gap:8px;}
@@ -579,7 +602,7 @@
 
 <section>
   <h2>Intuition Quiz</h2>
-  <div class="quiz-banner">Just for fun. This doesn't measure anything real, isn't scored against outcomes, and has no effect on the Prediction Test, Focus Circles, or anyone's actual odds — it's a personality quiz, not a diagnosis. If you're signed in, your own results are saved to <b>your own private history</b> below, visible only to you — never shown to anyone else, never aggregated into a leaderboard or ranking.</div>
+  <div class="quiz-banner">Just for fun. This doesn't measure anything real and has no effect on anyone's actual odds — it's a personality quiz, not a diagnosis. <b>Retaking it here is private:</b> if you're signed in, your results are saved to your own history below, visible only to you, and never shown on a leaderboard. The one exception is the same 8 questions you answer once in the welcome screen when you first sign in — those answers are used, alongside your Prediction Test results, in the Draw Room research report.</div>
 
   <div id="quizQuestions" class="quiz-questions"></div>
 
@@ -615,6 +638,10 @@
   let canEditPage = false; // profiles.is_admin
   const profileCache = new Map(); // userId -> {name, avatarUrl}
 
+  let resolveReady; const appReady = new Promise(r=>{ resolveReady = r; });
+  let myDisplayName = '';
+  let onboardShown = false;
+
   async function refreshProfile(){
     canEditPage = false;
     { const al = document.getElementById('adminLink'); if(al) al.hidden = true; }
@@ -622,8 +649,10 @@
     try{
       const { data } = await supa.from('profiles').select('is_admin,display_name').eq('id', myId).maybeSingle();
       canEditPage = !!(data && data.is_admin);
+      myDisplayName = (data && data.display_name) || '';
     }catch(e){}
     const al = document.getElementById('adminLink'); if(al) al.hidden = !canEditPage;
+    maybeOnboard();
   }
 
   async function profilesFor(ids){
@@ -1737,7 +1766,7 @@
     result.innerHTML = `
       <div class="qtitle"></div>
       <div class="qblurb"></div>
-      <div class="qnote">Score: ${total}/40 — a personality read, not a measurement. Saved only to your own private history if you're signed in; never shared, never aggregated, and it doesn't feed the Prediction Test or any circle. If you want a real test of whether your instincts beat chance, that's what the Prediction Test above is for.</div>
+      <div class="qnote">Score: ${total}/40 — a personality read, not a measurement. Saved only to your own private history if you're signed in; retaking the quiz here is never shared or aggregated. If you want a real test of whether your instincts beat chance, that's what the Prediction Test above is for.</div>
     `;
     result.querySelector('.qtitle').textContent = archetype.title;
     result.querySelector('.qblurb').textContent = archetype.blurb;
@@ -1756,6 +1785,136 @@
     qWrap.querySelectorAll('.quiz-opt').forEach(o=>o.classList.remove('selected'));
     $('#quizResult').hidden = true;
   });
+
+  // ---- Welcome questions (shown once, right after first sign-in) ----
+  // Answers are stored in public.onboarding and used in the admin research
+  // report next to the player's Prediction Test results. The screen says so.
+  const ONB_METHODS = [['dates','Birthdays & dates'],['dip','Lucky dip'],['same','Same numbers every time'],['stats','Hot / cold stats'],['gut','Gut feeling'],['signs','Dreams or signs']];
+  const ONB_GAMES = [['lotto','UK Lotto'],['euro','EuroMillions'],['both','Both'],['neither','Neither']];
+  const ONB_FREQ = [['','Choose…'],['never','Never'],['occasionally','Occasionally'],['weekly','Most weeks'],['every_draw','Every draw']];
+
+  async function maybeOnboard(){
+    if(!myId || onboardShown) return;
+    await appReady;
+    const uid = myId;
+    try{ if(localStorage.getItem('dr_onb_'+uid)) return; }catch(e){}
+    try{
+      const { data, error } = await supa.from('onboarding').select('user_id').eq('user_id', uid).maybeSingle();
+      if(error) return;            // table not set up yet — never nag without somewhere to save
+      if(data){ try{ localStorage.setItem('dr_onb_'+uid,'1'); }catch(e){} return; }
+    }catch(e){ return; }
+    if(uid !== myId || onboardShown) return;
+    onboardShown = true;
+    showOnboarding(uid);
+  }
+
+  function showOnboarding(uid){
+    const state = { age:false, anon:false, game:'', freq:'', methods:new Set(), answers:new Array(QUIZ_QUESTIONS.length).fill(null) };
+    const ov = document.createElement('div'); ov.className = 'onb-overlay';
+    ov.innerHTML = `
+      <div class="onb-card" role="dialog" aria-modal="true" aria-labelledby="onbTitle">
+        <h2 id="onbTitle">Welcome to Draw Room</h2>
+        <div style="color:var(--text-dim);font-size:.85rem;">A few quick questions before you start.</div>
+        <div class="onb-notice"><b>How your answers are used.</b> Draw Room is a research project asking whether anyone's picks or instincts beat chance. Your answers below are stored with your account and used in our research report, where they are compared with your Prediction Test results. Nothing here changes anyone's odds. Everything is optional except the age confirmation.</div>
+
+        <div class="onb-group">
+          <label class="onb-check"><input type="checkbox" id="onbAge"><span>I'm 18 or over <b>(required)</b></span></label>
+        </div>
+
+        <div class="onb-group">
+          <div class="pt-label">Name on the leaderboard</div>
+          <input class="onb-input" id="onbName" type="text" maxlength="40" placeholder="Your name">
+          <label class="onb-check" style="margin-top:8px;font-size:.84rem;color:var(--text-dim);"><input type="checkbox" id="onbAnon"><span>Show me as “Anonymous” instead</span></label>
+        </div>
+
+        <div class="onb-group">
+          <div class="pt-label">Which game do you usually play?</div>
+          <div class="onb-chips" id="onbGame"></div>
+        </div>
+
+        <div class="onb-group">
+          <div class="pt-label">How often do you play?</div>
+          <select id="onbFreq" class="onb-input"></select>
+        </div>
+
+        <div class="onb-group">
+          <div class="pt-label">How do you normally pick your numbers? (any that apply)</div>
+          <div class="onb-chips" id="onbMethods"></div>
+        </div>
+
+        <div class="onb-group">
+          <div class="pt-label">About you — 1 is “Never”, 5 is “Always”</div>
+          <div id="onbQuiz"></div>
+        </div>
+
+        <div class="onb-actions">
+          <button class="primary" id="onbGo" type="button" disabled>Continue</button>
+          <span class="onb-status" id="onbStatus"></span>
+        </div>
+      </div>`;
+    document.body.appendChild(ov);
+    const prevOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden';
+    const $o = sel => ov.querySelector(sel);
+
+    $o('#onbName').value = myDisplayName;
+    ONB_GAMES.forEach(([v,l])=>{
+      const b = document.createElement('button'); b.type='button'; b.className='onb-chip'; b.textContent=l;
+      b.addEventListener('click', ()=>{ state.game = state.game===v ? '' : v; $o('#onbGame').querySelectorAll('.onb-chip').forEach((c,i)=>c.classList.toggle('on', ONB_GAMES[i][0]===state.game)); });
+      $o('#onbGame').appendChild(b);
+    });
+    ONB_FREQ.forEach(([v,l])=>{ const o=document.createElement('option'); o.value=v; o.textContent=l; $o('#onbFreq').appendChild(o); });
+    ONB_METHODS.forEach(([v,l])=>{
+      const b = document.createElement('button'); b.type='button'; b.className='onb-chip'; b.textContent=l;
+      b.addEventListener('click', ()=>{ state.methods.has(v) ? state.methods.delete(v) : state.methods.add(v); b.classList.toggle('on', state.methods.has(v)); });
+      $o('#onbMethods').appendChild(b);
+    });
+    QUIZ_QUESTIONS.forEach((q, qi)=>{
+      const row = document.createElement('div'); row.className='onb-q';
+      row.innerHTML = `<div class="qtext"></div><div class="quiz-scale">${QUIZ_LABELS.map(v=>`<div class="quiz-opt" data-q="${qi}" data-v="${v}">${v===1?'Never':v===5?'Always':v}</div>`).join('')}</div>`;
+      row.querySelector('.qtext').textContent = q;
+      $o('#onbQuiz').appendChild(row);
+    });
+    $o('#onbQuiz').addEventListener('click', e=>{
+      const opt = e.target.closest('.quiz-opt'); if(!opt) return;
+      const qi = +opt.dataset.q, v = +opt.dataset.v;
+      state.answers[qi] = v;
+      $o('#onbQuiz').querySelectorAll(`.quiz-opt[data-q="${qi}"]`).forEach(o=>o.classList.toggle('selected', +o.dataset.v===v));
+    });
+    $o('#onbAge').addEventListener('change', e=>{ state.age = e.target.checked; $o('#onbGo').disabled = !state.age; });
+    $o('#onbAnon').addEventListener('change', e=>{ state.anon = e.target.checked; $o('#onbName').disabled = state.anon; });
+
+    const st = $o('#onbStatus');
+    $o('#onbGo').addEventListener('click', async ()=>{
+      if(!state.age) return;
+      const btn = $o('#onbGo'); btn.disabled = true; st.className='onb-status'; st.textContent='Saving…';
+      const complete = state.answers.every(a=>a!==null);
+      const row = {
+        user_id: uid, age_confirmed: true,
+        game: state.game || null, frequency: $o('#onbFreq').value || null,
+        pick_methods: Array.from(state.methods),
+        quiz_answers: complete ? state.answers : [],
+        quiz_score: complete ? state.answers.reduce((a,b)=>a+b,0) : null
+      };
+      try{
+        const { error } = await supa.from('onboarding').insert(row);
+        if(error) throw error;
+      }catch(e){
+        st.className='onb-status err'; st.textContent='Could not save that right now — please try again.'; btn.disabled = false; return;
+      }
+      // leaderboard name (best effort)
+      const name = state.anon ? 'Anonymous' : $o('#onbName').value.trim().slice(0,40);
+      if(name && name !== myDisplayName){
+        try{ await supa.from('profiles').update({ display_name: name }).eq('id', uid); myDisplayName = name; profileCache.delete(uid); }catch(e){}
+      }
+      try{ localStorage.setItem('dr_onb_'+uid,'1'); }catch(e){}
+      document.body.style.overflow = prevOverflow;
+      ov.remove();
+      try{ refreshPredictions(pt.game); }catch(e){}
+    });
+    $o('#onbAge').focus();
+  }
+
+  resolveReady();
 })();
 </script>
 </body>
