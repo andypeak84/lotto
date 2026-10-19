@@ -1,0 +1,1762 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Draw Room</title>
+<meta name="description" content="A honest UK Lotto and EuroMillions number generator and draw-history explorer — no fake predictions, just real stats.">
+<style>
+  :root{
+    --ink:#f7f5ef;
+    --paper:#faf8f2;
+    --surface:#ffffff;
+    --surface-2:#f0ede3;
+    --line:#e2ddce;
+    --text:#241f18;
+    --text-dim:#6b6455;
+    --brass:#9c7a1f;
+    --brass-strong:#7a5f16;
+    --teal:#1f7d72;
+    --teal-strong:#155953;
+    --red:#a3392c;
+    --shadow: 0 1px 2px rgba(36,31,24,.06), 0 8px 24px -12px rgba(36,31,24,.18);
+    font-synthesis: none;
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --ink:#12110d;
+      --paper:#15140f;
+      --surface:#1c1a14;
+      --surface-2:#242119;
+      --line:#332e22;
+      --text:#f1ede2;
+      --text-dim:#a99f8a;
+      --brass:#d9b24c;
+      --brass-strong:#eccb6b;
+      --teal:#4bbdae;
+      --teal-strong:#6fd4c6;
+      --red:#e08774;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px -14px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#12110d;
+    --paper:#15140f;
+    --surface:#1c1a14;
+    --surface-2:#242119;
+    --line:#332e22;
+    --text:#f1ede2;
+    --text-dim:#a99f8a;
+    --brass:#d9b24c;
+    --brass-strong:#eccb6b;
+    --teal:#4bbdae;
+    --teal-strong:#6fd4c6;
+    --red:#e08774;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px -14px rgba(0,0,0,.6);
+  }
+
+  @font-face{
+    font-family:'Fraunces';
+    src:local('Fraunces');
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  *{box-sizing:border-box;}
+  html,body{background:var(--paper);color:var(--text);}
+  body{
+    margin:0;
+    font-family:'Inter',ui-sans-serif,system-ui,sans-serif;
+    padding-inline:20px;
+    padding-block:28px 60px;
+    max-width:840px;
+    margin-inline:auto;
+    line-height:1.5;
+  }
+  h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;letter-spacing:-0.01em;margin:0;}
+  .num{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;}
+
+  header.top{
+    display:flex;justify-content:space-between;align-items:flex-end;gap:16px;
+    margin-bottom:14px;flex-wrap:wrap;
+  }
+  header.top .brand h1{font-size:1.7rem;color:var(--text);}
+  header.top .brand p{margin:.25rem 0 0;color:var(--text-dim);font-size:.9rem;max-width:36ch;}
+  .theme-btn{
+    border:1px solid var(--line);background:var(--surface);color:var(--text-dim);
+    border-radius:20px;padding:6px 12px;font-size:.78rem;cursor:pointer;font-family:'Inter';
+  }
+
+  .auth-bar{
+    display:flex;align-items:center;gap:10px;justify-content:flex-end;flex-wrap:wrap;
+    margin-bottom:18px;font-size:.84rem;color:var(--text-dim);
+  }
+  .auth-bar input[type=email]{
+    padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);
+    color:var(--text);font-family:'Inter';font-size:.84rem;min-width:200px;
+  }
+  .auth-btn{
+    border:1px solid var(--teal);background:transparent;color:var(--teal-strong);border-radius:8px;
+    padding:8px 14px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:'Inter';
+  }
+  .auth-chip{
+    display:flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:999px;
+    padding:5px 10px 5px 5px;
+  }
+  .auth-chip img{width:22px;height:22px;border-radius:50%;}
+  .auth-google{
+    display:inline-flex;align-items:center;gap:8px;background:#fff;color:#1f1f1f;
+    border:1px solid #dadce0;border-radius:8px;padding:8px 14px;font-size:.82rem;font-weight:600;
+    cursor:pointer;font-family:'Inter';
+  }
+  .auth-google svg{width:16px;height:16px;flex:none;}
+  .auth-or{font-size:.74rem;color:var(--text-dim);}
+
+  .game-tabs{display:flex;gap:8px;margin-bottom:20px;}
+  .game-tab{
+    flex:1;padding:12px 14px;border-radius:14px;border:1px solid var(--line);
+    background:var(--surface);cursor:pointer;text-align:left;transition:border-color .15s, background .15s;
+  }
+  .game-tab strong{display:block;font-family:'Fraunces';font-size:1.05rem;font-weight:600;}
+  .game-tab span{color:var(--text-dim);font-size:.78rem;}
+  .game-tab.active{border-color:var(--brass);background:var(--surface-2);}
+  .game-tab.active strong{color:var(--brass-strong);}
+
+  section{
+    background:var(--surface);border:1px solid var(--line);border-radius:18px;
+    padding:22px;margin-bottom:18px;box-shadow:var(--shadow);
+  }
+  section h2{font-size:1.15rem;margin-bottom:4px;}
+  section .sub{color:var(--text-dim);font-size:.85rem;margin-bottom:16px;}
+
+  .mode-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .mode-btn{
+    padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);
+    color:var(--text);font-size:.82rem;cursor:pointer;font-family:'Inter';font-weight:500;
+  }
+  .mode-btn.active{background:var(--teal);border-color:var(--teal);color:#fff;}
+  :root:not([data-theme="light"]) .mode-btn.active{color:#0c1512;}
+  :root[data-theme="dark"] .mode-btn.active{color:#0c1512;}
+
+  .toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;font-size:.86rem;color:var(--text-dim);}
+  .toggle-row input{accent-color:var(--teal);width:16px;height:16px;}
+
+  .lines{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;min-height:52px;}
+  .line{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .ball{
+    width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono';font-weight:600;font-size:.92rem;
+    background:var(--surface-2);border:1.5px solid var(--line);color:var(--text);
+    flex-shrink:0;
+  }
+  .ball.star{background:var(--teal);border-color:var(--teal);color:#fff;}
+  :root:not([data-theme="light"]) .ball.star{color:#0c1512;}
+  :root[data-theme="dark"] .ball.star{color:#0c1512;}
+  .ball.bonus{background:var(--brass);border-color:var(--brass);color:#fff;}
+
+  .gen-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  button.primary{
+    background:var(--teal);color:#fff;border:none;border-radius:10px;padding:11px 20px;
+    font-family:'Inter';font-weight:600;font-size:.9rem;cursor:pointer;
+  }
+  :root:not([data-theme="light"]) button.primary{color:#0c1512;}
+  :root[data-theme="dark"] button.primary{color:#0c1512;}
+  button.ghost{
+    background:transparent;color:var(--text-dim);border:1px solid var(--line);border-radius:10px;
+    padding:11px 16px;font-family:'Inter';font-size:.85rem;cursor:pointer;
+  }
+
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
+  .stat-tile{background:var(--surface-2);border-radius:12px;padding:14px;}
+  .stat-tile .k{font-size:1.4rem;font-family:'Fraunces';color:var(--brass-strong);}
+  .stat-tile .l{font-size:.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
+
+  .verdict{
+    display:flex;gap:12px;padding:14px 16px;border-radius:12px;background:var(--surface-2);
+    border-left:3px solid var(--teal);font-size:.88rem;color:var(--text);margin-bottom:4px;
+  }
+  .verdict b{color:var(--teal-strong);}
+
+  .chart-wrap{overflow-x:auto;padding-bottom:4px;}
+  .chart{display:flex;align-items:flex-end;gap:3px;height:150px;min-width:560px;}
+  .bar{flex:1;background:var(--surface-2);border-radius:3px 3px 0 0;position:relative;min-width:6px;}
+  .bar.hot{background:var(--brass);}
+  .bar.cold{background:var(--teal);opacity:.55;}
+  .chart-labels{display:flex;justify-content:space-between;font-size:.68rem;color:var(--text-dim);min-width:560px;margin-top:4px;}
+
+  .freq-legend{display:flex;gap:16px;font-size:.76rem;color:var(--text-dim);margin-top:10px;}
+  .freq-legend span{display:flex;align-items:center;gap:6px;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+  .checker-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .checker-row input[type=text]{
+    flex:1;min-width:220px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--text);font-family:'IBM Plex Mono';font-size:.9rem;
+  }
+  select{
+    padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);
+    color:var(--text);font-family:'Inter';font-size:.85rem;
+  }
+  .check-result{padding:12px 14px;border-radius:10px;background:var(--surface-2);font-size:.88rem;display:none;}
+  .check-result.show{display:block;}
+
+  footer{color:var(--text-dim);font-size:.78rem;text-align:center;margin-top:28px;line-height:1.7;}
+  footer a{color:var(--teal-strong);}
+
+  .circle-form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+  .circle-form input[type=text]{
+    flex:2;min-width:160px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--text);font-family:'Inter';font-size:.88rem;
+  }
+  .circle-form input[type=number]{
+    flex:1;min-width:100px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--text);font-family:'IBM Plex Mono';font-size:.88rem;
+  }
+  .circle-list{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+  .circle-card{
+    display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:12px;
+    background:var(--surface-2);border:1px solid var(--line);flex-wrap:wrap;
+  }
+  .circle-card .cinfo{flex:1;min-width:120px;}
+  .circle-card .cname{font-family:'Fraunces';font-weight:600;font-size:.98rem;}
+  .circle-card .cmeta{color:var(--text-dim);font-size:.76rem;margin-top:2px;}
+  .circle-empty{color:var(--text-dim);font-size:.85rem;padding:10px 2px;}
+  button.join{
+    background:transparent;border:1px solid var(--teal);color:var(--teal-strong);
+    border-radius:8px;padding:8px 14px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:'Inter';
+  }
+  button.join.joined{background:var(--teal);color:#fff;border-color:var(--teal);}
+  :root:not([data-theme="light"]) button.join.joined{color:#0c1512;}
+  :root[data-theme="dark"] button.join.joined{color:#0c1512;}
+
+  .predict-target{
+    display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;
+    background:var(--surface-2);color:var(--text-dim);font-size:.82rem;margin-bottom:12px;
+  }
+  .predict-target b{color:var(--text);font-family:'IBM Plex Mono';}
+  .result-entry{
+    margin-top:16px;padding-top:14px;border-top:1px dashed var(--line);
+  }
+  .leaderboard{display:flex;flex-direction:column;gap:8px;}
+  .lb-row{
+    display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;
+    background:var(--surface-2);font-size:.86rem;
+  }
+  .lb-row .lb-rank{width:22px;color:var(--text-dim);font-family:'IBM Plex Mono';}
+  .lb-row .lb-name{flex:1;font-weight:500;}
+  .lb-row .lb-stat{color:var(--text-dim);font-size:.78rem;text-align:right;}
+  .lb-row .lb-stat b{color:var(--brass-strong);font-family:'IBM Plex Mono';}
+
+  .quiz-banner{
+    padding:12px 14px;border-radius:12px;background:var(--surface-2);border-left:3px solid var(--red);
+    color:var(--text-dim);font-size:.82rem;margin-bottom:16px;
+  }
+  .quiz-questions{display:flex;flex-direction:column;gap:16px;}
+  .quiz-q{display:flex;flex-direction:column;gap:8px;}
+  .quiz-q .qtext{font-size:.9rem;}
+  .quiz-scale{display:flex;gap:6px;flex-wrap:wrap;}
+  .quiz-opt{
+    flex:1;min-width:64px;text-align:center;padding:8px 6px;border-radius:8px;border:1px solid var(--line);
+    background:var(--surface-2);font-size:.74rem;color:var(--text-dim);cursor:pointer;user-select:none;
+  }
+  .quiz-opt.selected{background:var(--teal);border-color:var(--teal);color:#fff;}
+  :root:not([data-theme="light"]) .quiz-opt.selected{color:#0c1512;}
+  :root[data-theme="dark"] .quiz-opt.selected{color:#0c1512;}
+  .quiz-result{
+    margin-top:18px;padding:16px;border-radius:12px;background:var(--surface-2);
+    border-left:3px solid var(--brass);
+  }
+  .quiz-result .qtitle{font-family:'Fraunces';font-weight:600;font-size:1.1rem;color:var(--brass-strong);margin-bottom:6px;}
+  .quiz-result .qnote{font-size:.8rem;color:var(--text-dim);margin-top:10px;}
+  .quiz-history{display:flex;flex-direction:column;gap:6px;}
+  .qh-row{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:8px;background:var(--surface-2);font-size:.82rem;}
+  .qh-row .qh-title{font-weight:600;}
+  .qh-row .qh-meta{color:var(--text-dim);font-size:.76rem;}
+
+  /* ---- Prediction Test picker ---- */
+  .pt-step{margin-bottom:18px;}
+  .pt-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);font-weight:600;margin-bottom:8px;}
+  .pt-hint{font-size:.78rem;color:var(--text-dim);margin-top:8px;}
+  .pt-h3{font-size:.95rem;margin:22px 0 8px;}
+  .seg{display:flex;gap:6px;padding:4px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line);}
+  .seg button{
+    flex:1;border:none;background:transparent;border-radius:10px;padding:10px 12px;cursor:pointer;
+    font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:.98rem;color:var(--text-dim);text-align:left;
+  }
+  .seg button small{display:block;font-family:'Inter';font-weight:400;font-size:.72rem;margin-top:1px;}
+  .seg button.active{background:var(--surface);color:var(--brass-strong);box-shadow:var(--shadow);}
+  .date-chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;}
+  .date-chip{
+    flex:none;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:66px;
+    padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);
+    color:var(--text);cursor:pointer;font-family:'Inter';position:relative;
+  }
+  .date-chip .dow{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);}
+  .date-chip .dd{font-family:'Fraunces';font-weight:600;font-size:1.25rem;line-height:1.1;}
+  .date-chip .mm{font-size:.72rem;color:var(--text-dim);}
+  .date-chip.active{border-color:var(--teal);background:var(--teal);color:#fff;}
+  .date-chip.active .dow,.date-chip.active .mm{color:inherit;opacity:.85;}
+  :root:not([data-theme="light"]) .date-chip.active{color:#0c1512;}
+  :root[data-theme="dark"] .date-chip.active{color:#0c1512;}
+  .date-chip .mine{position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--brass);}
+
+  .pt-ticket{
+    display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px;border-radius:14px;
+    background:var(--surface-2);margin-bottom:12px;min-height:62px;
+  }
+  .pt-ticket .plus{color:var(--text-dim);font-weight:600;margin:0 2px;}
+  .slot{
+    width:38px;height:38px;border-radius:50%;border:1.5px dashed var(--line);flex-shrink:0;
+    background:transparent;padding:0;cursor:default;
+  }
+  .slot.bonus-slot{border-color:var(--brass);opacity:.6;}
+  .slot.star-slot{border-color:var(--teal);opacity:.6;}
+  .pt-ticket .ball{cursor:pointer;border-width:1.5px;}
+
+  .pick-tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+  .pick-tabs button{
+    padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;
+    color:var(--text-dim);font-family:'Inter';font-size:.8rem;font-weight:500;cursor:pointer;
+  }
+  .pick-tabs button .num{margin-left:4px;}
+  .pick-tabs button.active{background:var(--surface-2);color:var(--text);border-color:var(--text-dim);}
+  .pick-tabs button.full .num{color:var(--teal-strong);}
+
+  .pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:6px;}
+  .pick{
+    aspect-ratio:1;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);
+    color:var(--text);font-family:'IBM Plex Mono';font-weight:600;font-size:.86rem;cursor:pointer;padding:0;
+    display:flex;align-items:center;justify-content:center;transition:transform .08s, background .12s;
+    max-width:48px;justify-self:center;width:100%;
+  }
+  .pick:hover{border-color:var(--text-dim);}
+  .pick:active{transform:scale(.92);}
+  .pick.on{background:var(--text);border-color:var(--text);color:var(--paper);}
+  .pick.on.star{background:var(--teal);border-color:var(--teal);color:#fff;}
+  :root:not([data-theme="light"]) .pick.on.star{color:#0c1512;}
+  :root[data-theme="dark"] .pick.on.star{color:#0c1512;}
+  .pick.taken{opacity:.28;cursor:not-allowed;}
+  .pick-grid.star-grid{grid-template-columns:repeat(auto-fill,minmax(44px,1fr));}
+
+  .pt-status{font-size:.84rem;color:var(--text-dim);margin-top:10px;min-height:1.2em;}
+  .pt-status.ok{color:var(--teal-strong);}
+  .pt-status.err{color:var(--red);}
+
+  .pt-mine{display:flex;flex-direction:column;gap:8px;}
+  .pm-row{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;
+    background:var(--surface-2);
+  }
+  .pm-when{min-width:96px;}
+  .pm-when b{display:block;font-size:.86rem;}
+  .pm-when span{font-size:.72rem;color:var(--text-dim);}
+  .pm-balls{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:180px;}
+  .pm-balls .ball{width:28px;height:28px;font-size:.74rem;}
+  .pm-balls .ball.hit{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--teal);}
+  .pm-state{font-size:.76rem;color:var(--text-dim);text-align:right;}
+  .pm-state b{color:var(--text);}
+  .pm-actions{display:flex;gap:6px;}
+  .pm-actions button{
+    border:1px solid var(--line);background:var(--surface);color:var(--text-dim);border-radius:8px;
+    padding:5px 10px;font-size:.74rem;cursor:pointer;font-family:'Inter';
+  }
+
+  .ydc{border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:14px 16px;margin:0 0 18px;}
+  .ydc[hidden]{display:none;}
+  .ydc-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .ydc-head b{font-size:.95rem;}
+  .ydc-head span{font-size:.74rem;color:var(--text-dim);}
+  .ydc-line{padding:8px 0;border-top:1px solid var(--line);}
+  .ydc-line:first-of-type{border-top:0;}
+  .ydc-lab{font-size:.72rem;color:var(--text-dim);margin-bottom:4px;}
+  .ydc-balls{display:flex;gap:4px;flex-wrap:wrap;align-items:center;}
+  .ydc-balls .ball{width:28px;height:28px;font-size:.74rem;}
+  .ydc-balls .ball.hit{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--teal);}
+  .ydc-balls .ball.miss{opacity:.35;}
+  .ydc-sep{width:8px;}
+  .ydc-sum{font-size:.84rem;margin-top:8px;}
+  .ydc-foot{font-size:.72rem;color:var(--text-dim);margin-top:6px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .ydc-foot button{border:1px solid var(--line);background:var(--surface-2);color:var(--text);border-radius:8px;padding:4px 10px;font-size:.74rem;cursor:pointer;font-family:'Inter';}
+
+  #resultEntry input[type=date]{
+    padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);
+    color:var(--text);font-family:'Inter';font-size:.85rem;color-scheme:light dark;
+  }
+  /* Ball colours by number band: 1-9 white, 10s blue, 20s pink, 30s green, 40s yellow, 50s purple */
+  .ball.c-white,.pick.on.c-white{background:#f7f6f1;border-color:#cfc9b8;color:#241f18;}
+  .ball.c-blue,.pick.on.c-blue{background:#2b74d1;border-color:#2b74d1;color:#fff;}
+  .ball.c-pink,.pick.on.c-pink{background:#ec6fa9;border-color:#ec6fa9;color:#fff;}
+  .ball.c-green,.pick.on.c-green{background:#2c9a56;border-color:#2c9a56;color:#fff;}
+  .ball.c-yellow,.pick.on.c-yellow{background:#f3c52f;border-color:#f3c52f;color:#2a2105;}
+  .ball.c-purple,.pick.on.c-purple{background:#8350c4;border-color:#8350c4;color:#fff;}
+  /* Bonus ball keeps its number colour, marked with a brass ring */
+  .ball.bonus[class*="c-"],.pick.on.bonus{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--brass);}
+  .pm-balls .ball.hit{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--teal) !important;}
+  .cs-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;}
+  .cs-tile{background:var(--surface-2);border-radius:12px;padding:12px 14px;}
+  .cs-tile .k{font-family:'Fraunces';font-size:1.45rem;color:var(--brass-strong);}
+  .cs-tile .l{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);}
+  .cs-tile .s{font-size:.76rem;color:var(--text-dim);margin-top:2px;}
+  .cs-tile.you .k{color:var(--teal-strong);}
+  .cs-verdict{padding:12px 14px;border-radius:12px;background:var(--surface-2);border-left:3px solid var(--teal);font-size:.86rem;margin-bottom:14px;}
+  .cs-verdict b{color:var(--teal-strong);}
+  .cs-hist{display:flex;flex-direction:column;gap:6px;}
+  .cs-hrow{display:grid;grid-template-columns:70px 1fr 120px;gap:10px;align-items:center;font-size:.8rem;}
+  .cs-hrow .lab{color:var(--text-dim);}
+  .cs-bars{display:flex;flex-direction:column;gap:3px;}
+  .cs-bars i{display:block;height:8px;border-radius:4px;min-width:2px;}
+  .cs-bars i.obs{background:var(--brass);}
+  .cs-bars i.exp{background:var(--text-dim);opacity:.45;}
+  .cs-hrow .val{font-family:'IBM Plex Mono';font-size:.74rem;color:var(--text-dim);text-align:right;}
+  .cs-hrow .val b{color:var(--text);font-weight:600;}
+  .cs-legend{display:flex;gap:16px;font-size:.74rem;color:var(--text-dim);margin-top:8px;flex-wrap:wrap;}
+  .cs-legend span{display:flex;align-items:center;gap:6px;}
+  .cs-legend i{width:12px;height:8px;border-radius:4px;display:inline-block;}
+  @media (max-width:480px){
+    .seg button small{display:none;}
+    .cs-hrow{grid-template-columns:52px 1fr 92px;gap:8px;}
+    .pt-ticket{gap:5px;padding:10px;}
+    .pt-ticket .ball,.slot{width:31px;height:31px;font-size:.8rem;}
+    .pt-ticket .plus{margin:0;}
+    .pm-state{text-align:left;}
+    .game-tabs{flex-direction:column;}
+    header.top{flex-direction:column;align-items:flex-start;}
+    .auth-bar{justify-content:flex-start;}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <h1>Draw Room</h1>
+    <p>Real UK Lotto &amp; EuroMillions history, honest odds, no fake predictions.</p>
+  </div>
+  <button class="theme-btn" id="themeBtn" type="button">Dark mode</button>
+</header>
+
+<div class="auth-bar" id="authBar"></div>
+
+<div class="game-tabs">
+  <button class="game-tab active" id="tabLotto" type="button">
+    <strong>UK Lotto</strong>
+    <span>6 from 59 · £2/line</span>
+  </button>
+  <button class="game-tab" id="tabEuro" type="button">
+    <strong>EuroMillions</strong>
+    <span>5 from 50 + 2 stars from 12</span>
+  </button>
+</div>
+
+<section id="generatorSection">
+  <h2>Line generator</h2>
+  <div class="sub" id="genSub">Pick a style, then generate. None of these improve your odds — see why below.</div>
+
+  <div class="mode-row" id="modeRow">
+    <button class="mode-btn active" data-mode="dip">Lucky dip</button>
+    <button class="mode-btn" data-mode="hot">Hot numbers</button>
+    <button class="mode-btn" data-mode="cold">Cold numbers</button>
+    <button class="mode-btn" data-mode="balanced">Balanced spread</button>
+  </div>
+
+  <label class="toggle-row">
+    <input type="checkbox" id="neverDrawnToggle" checked>
+    Skip any combination that has already been drawn (harmless, doesn't change your odds)
+  </label>
+
+  <div class="lines" id="linesOut"></div>
+
+  <div class="gen-actions">
+    <button class="primary" id="genBtn" type="button">Generate a line</button>
+    <button class="ghost" id="genFiveBtn" type="button">Generate 5 lines</button>
+    <button class="ghost" id="clearBtn" type="button">Clear</button>
+  </div>
+</section>
+
+<section>
+  <h2>What the numbers actually say</h2>
+  <div class="sub" id="statsSub">Computed from real official draw history — not a sample, the whole record.</div>
+
+  <div class="stat-grid" id="statGrid"></div>
+
+  <div class="verdict" id="verdictBox"></div>
+</section>
+
+<section>
+  <h2>Number frequency</h2>
+  <div class="sub">How many times each ball has been drawn, across the full history below.</div>
+  <div class="chart-wrap">
+    <div class="chart" id="freqChart"></div>
+    <div class="chart-labels" id="freqLabels"></div>
+  </div>
+  <div class="freq-legend">
+    <span><i class="dot" style="background:var(--brass)"></i> 5 most-drawn</span>
+    <span><i class="dot" style="background:var(--teal);opacity:.55"></i> 5 least-drawn</span>
+  </div>
+</section>
+
+<section>
+  <h2>Ticket checker</h2>
+  <div class="sub">Enter your numbers and compare against any past draw.</div>
+  <div class="checker-row">
+    <input type="text" id="checkInput" placeholder="e.g. 3, 17, 22, 34, 41, 59">
+    <select id="checkDraw"></select>
+    <button class="primary" id="checkBtn" type="button">Check</button>
+  </div>
+  <div class="check-result" id="checkResult"></div>
+</section>
+
+<section>
+  <h2>Focus Circles</h2>
+  <div class="sub">A shared number your group rallies around for draw night. Purely social — <b>it does not change anyone's odds.</b> Every number stays exactly <span id="circleOddsNote" class="num"></span>, whether zero people or ten thousand people are "focused" on it.</div>
+
+  <div class="circle-form">
+    <input type="text" id="circleName" placeholder="Circle name (e.g. Flat 4B)" maxlength="40">
+    <input type="number" id="circleNumber" placeholder="Focus number" min="1">
+    <button class="primary" id="circleCreateBtn" type="button">Start a circle</button>
+  </div>
+  <div class="sub" id="circleStatus" style="margin-top:-4px;"></div>
+
+  <div id="circleList" class="circle-list"></div>
+</section>
+
+<section>
+  <h2>Prediction Test</h2>
+  <div id="yourDrawCard" class="ydc" hidden></div>
+  <div class="sub">A real, falsifiable test — if anyone has a knack, this is where it would show up. Lock in numbers before a draw; once the real result is in (fetched automatically from the official National Lottery feed), everyone's hit-rate is measured against what pure chance predicts.</div>
+
+  <div class="pt-step">
+    <div class="pt-label">Game</div>
+    <div class="seg" id="ptGame" role="tablist">
+      <button type="button" data-game="lotto" class="active" role="tab">UK Lotto<small>6 from 59 + bonus ball</small></button>
+      <button type="button" data-game="euro" role="tab">EuroMillions<small>5 from 50 + 2 Lucky Stars</small></button>
+    </div>
+  </div>
+
+  <div class="pt-step">
+    <div class="pt-label">Draw date</div>
+    <div class="date-chips" id="ptDates"></div>
+    <div class="pt-hint" id="ptDateHint"></div>
+  </div>
+
+  <div class="pt-step">
+    <div class="pt-label">Your numbers</div>
+    <div class="pt-ticket" id="ptTicket"></div>
+    <div class="pick-tabs" id="ptTabs">
+      <button type="button" data-pool="main" class="active">Main numbers <span class="num" id="ptMainCount">0/6</span></button>
+      <button type="button" data-pool="bonus"><span id="ptBonusName">Bonus ball</span> <span class="num" id="ptBonusCount">0/1</span></button>
+    </div>
+    <div class="pick-grid" id="ptGrid"></div>
+  </div>
+
+  <div class="gen-actions">
+    <button class="primary" id="predictBtn" type="button">Lock it in</button>
+    <button class="ghost" id="ptDipBtn" type="button">Lucky dip</button>
+    <button class="ghost" id="ptClearBtn" type="button">Clear</button>
+  </div>
+  <div class="pt-status" id="predictStatus" role="status"></div>
+
+  <h3 class="pt-h3">Your predictions</h3>
+  <div id="ptMine" class="pt-mine"></div>
+
+  <div id="resultEntry" class="result-entry" hidden>
+    <h3 style="font-size:.95rem;margin-bottom:8px;">Enter the actual result (editor only) — <span id="resultGameName"></span></h3>
+    <div class="checker-row">
+      <input type="date" id="resultDate">
+      <input type="text" id="resultInput" placeholder="Main numbers drawn">
+      <input type="text" id="resultBonus" placeholder="Bonus ball" style="flex:0 1 140px;min-width:120px;">
+      <button class="ghost" id="resultBtn" type="button">Save result</button>
+    </div>
+    <div class="sub" id="resultStatus" style="margin-top:-4px;"></div>
+  </div>
+
+  <h3 class="pt-h3">Leaderboard — <span id="lbGameName">UK Lotto</span></h3>
+  <div id="leaderboard" class="leaderboard"></div>
+
+  <h3 class="pt-h3">How everyone is doing — <span id="csGameName">UK Lotto</span></h3>
+  <div class="sub" style="margin-bottom:12px;">Every scored prediction from every player, set against what pure chance would produce. If anyone has a real knack, the community hit rate would sit clearly above the chance line over many draws.</div>
+  <div id="communityStats"></div>
+</section>
+
+<section>
+  <h2>Intuition Quiz</h2>
+  <div class="quiz-banner">Just for fun. This doesn't measure anything real, isn't scored against outcomes, and has no effect on the Prediction Test, Focus Circles, or anyone's actual odds — it's a personality quiz, not a diagnosis. If you're signed in, your own results are saved to <b>your own private history</b> below, visible only to you — never shown to anyone else, never aggregated into a leaderboard or ranking.</div>
+
+  <div id="quizQuestions" class="quiz-questions"></div>
+
+  <div class="gen-actions" style="margin-top:14px;">
+    <button class="primary" id="quizBtn" type="button">See my result</button>
+    <button class="ghost" id="quizResetBtn" type="button">Reset</button>
+  </div>
+
+  <div id="quizResult" class="quiz-result" hidden></div>
+
+  <h3 style="font-size:.95rem;margin:18px 0 8px;">Your quiz history</h3>
+  <div class="sub" style="margin-top:-6px;">Private to you. Nobody else who opens this app can see this list.</div>
+  <div id="quizHistory" class="quiz-history"></div>
+</section>
+
+<footer>
+  <span id="rangeText"></span><br>
+  UK Lotto figures use the current 6/59 format (introduced Oct 2015); EuroMillions Lucky Star stats use the stable 1–12 era (since Sep 2016) so an old rule change doesn't masquerade as a pattern.<br>
+  Every draw is independent — this tool is for picking lines you like, not for predicting winners.
+  <span id="adminLink" hidden><br><a href="admin.html">Admin report</a></span>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+(async function(){
+  // ---- Supabase client (replaces the claude.use('db')/('user') Artifact capabilities) ----
+  const SUPABASE_URL = 'https://talubhstvuqluwaztllv.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRhbHViaHN0dnVxbHV3YXp0bGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwODQ0MjMsImV4cCI6MjEwNjY2MDQyM30.o7_p_tcP_QVto8yg35IvTjKJvc8tQK2TBdVxp1Y3-zA';
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let session = null;
+  let myId = null;
+  let canEditPage = false; // profiles.is_admin
+  const profileCache = new Map(); // userId -> {name, avatarUrl}
+
+  async function refreshProfile(){
+    canEditPage = false;
+    { const al = document.getElementById('adminLink'); if(al) al.hidden = true; }
+    if(!myId) return;
+    try{
+      const { data } = await supa.from('profiles').select('is_admin,display_name').eq('id', myId).maybeSingle();
+      canEditPage = !!(data && data.is_admin);
+    }catch(e){}
+    const al = document.getElementById('adminLink'); if(al) al.hidden = !canEditPage;
+  }
+
+  async function profilesFor(ids){
+    const unique = Array.from(new Set(ids.filter(Boolean)));
+    const missing = unique.filter(id=>!profileCache.has(id));
+    if(missing.length){
+      try{
+        const { data } = await supa.from('profiles').select('id,display_name').in('id', missing);
+        (data||[]).forEach(row=>{
+          profileCache.set(row.id, { name: row.display_name || '', avatarUrl: '' });
+        });
+      }catch(e){}
+      missing.forEach(id=>{ if(!profileCache.has(id)) profileCache.set(id, {name:'', avatarUrl:''}); });
+    }
+    const out = {};
+    unique.forEach(id=> out[id] = profileCache.get(id) || {name:'', avatarUrl:''});
+    return out;
+  }
+
+  // ---- Auth bar ----
+  const authBar = document.getElementById('authBar');
+  function renderAuthBar(){
+    authBar.innerHTML = '';
+    if(session && session.user){
+      const meta = session.user.user_metadata || {};
+      const label = meta.full_name || meta.name || session.user.email || 'Signed in';
+      const chip = document.createElement('div');
+      chip.className = 'auth-chip';
+      chip.innerHTML = `<span></span>`;
+      chip.querySelector('span').textContent = label;
+      const avatar = meta.avatar_url || meta.picture;
+      if(avatar && /^https:\/\//.test(avatar)){
+        const img = document.createElement('img');
+        img.src = avatar; img.alt = ''; img.referrerPolicy = 'no-referrer';
+        chip.prepend(img);
+      }
+      const out = document.createElement('button');
+      out.className = 'auth-btn'; out.type='button'; out.textContent='Sign out';
+      out.addEventListener('click', async ()=>{ await supa.auth.signOut(); });
+      authBar.appendChild(chip);
+      authBar.appendChild(out);
+    } else {
+      const google = document.createElement('button');
+      google.className = 'auth-google'; google.type = 'button';
+      google.innerHTML = '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg><span>Continue with Google</span>';
+      google.addEventListener('click', async ()=>{
+        status.textContent = '';
+        const { error } = await supa.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.origin + window.location.pathname }
+        });
+        if(error) status.textContent = 'Google sign-in isn’t available right now.';
+      });
+      const or = document.createElement('span');
+      or.className = 'auth-or'; or.textContent = 'or';
+      authBar.appendChild(google);
+      authBar.appendChild(or);
+      const input = document.createElement('input');
+      input.type = 'email'; input.placeholder = 'you@example.com'; input.id = 'authEmail';
+      const btn = document.createElement('button');
+      btn.className = 'auth-btn'; btn.type = 'button'; btn.textContent = 'Email me a sign-in link';
+      const status = document.createElement('span');
+      status.style.fontSize = '.78rem';
+      btn.addEventListener('click', async ()=>{
+        const email = input.value.trim();
+        if(!email){ status.textContent = 'Enter an email first.'; return; }
+        status.textContent = 'Sending…';
+        try{
+          const { error } = await supa.auth.signInWithOtp({ email, options:{ emailRedirectTo: window.location.href } });
+          status.textContent = error ? 'Could not send that right now.' : 'Check your email for a link.';
+        }catch(e){ status.textContent = 'Could not send that right now.'; }
+      });
+      authBar.appendChild(input);
+      authBar.appendChild(btn);
+      authBar.appendChild(status);
+    }
+  }
+  renderAuthBar();
+
+  supa.auth.getSession().then(({data})=>{ session = data.session; myId = session?.user?.id || null; onAuthReady(); });
+  supa.auth.onAuthStateChange((_event, newSession)=>{
+    session = newSession; myId = session?.user?.id || null;
+    renderAuthBar();
+    refreshProfile().then(()=>{
+      subscribeCircles(current);
+      try{ subscribePredictions(pt.game); }catch(e){}
+      subscribeQuizHistory();
+    });
+  });
+
+  function onAuthReady(){
+    renderAuthBar();
+    refreshProfile();
+  }
+
+  // ---- Draw data ----
+  const res = await fetch('draws.json');
+  const DATA = await res.json();
+
+  const GAMES = {
+    lotto: {
+      label: 'UK Lotto', mainCount:6, mainMax:59,
+      hasStar:false, hasBonus:true, bonusMax:59,
+      rows: DATA.lotto.map(r=>({date:r[0], main:r.slice(1,7), bonus:r[7]})),
+      cost:'£2', jackpotOdds: '1 in 45,057,474'
+    },
+    euro: {
+      label: 'EuroMillions', mainCount:5, mainMax:50,
+      hasStar:true, starCount:2, starMax:12,
+      rows: DATA.euro.map(r=>({date:r[0], main:r.slice(1,6), stars:r.slice(6,8)})),
+      cost:'£2.50', jackpotOdds:'1 in 139,838,160'
+    }
+  };
+  // EuroMillions stars: restrict frequency stats to stable era (>=2016-09-27)
+  GAMES.euro.starRows = GAMES.euro.rows.filter(r=>r.date>='2016-09-27');
+
+  let current = 'lotto';
+  let theme = 'system';
+
+  const $ = s=>document.querySelector(s);
+  const themeBtn = $('#themeBtn');
+  themeBtn.addEventListener('click', ()=>{
+    theme = theme==='dark' ? 'light' : (theme==='light' ? 'system' : 'dark');
+    if(theme==='system'){ document.documentElement.removeAttribute('data-theme'); themeBtn.textContent='Dark mode'; }
+    else { document.documentElement.setAttribute('data-theme', theme); themeBtn.textContent = theme==='dark' ? 'Light mode' : 'System theme'; }
+  });
+
+  function freqCount(rows, field, max){
+    const counts = new Array(max+1).fill(0);
+    rows.forEach(r=> r[field].forEach(n=> counts[n]++));
+    return counts;
+  }
+
+  function chiSquare(counts, max, expected){
+    let chi=0;
+    for(let i=1;i<=max;i++){ const d=counts[i]-expected; chi += d*d/expected; }
+    return chi;
+  }
+  // rough chi-square p-value via Wilson-Hilferty approx (good enough for display)
+  function chiToP(chi, df){
+    const z = Math.pow(chi/df,1/3) - (1 - 2/(9*df));
+    const zsig = Math.sqrt(2/(9*df));
+    const zz = z/zsig;
+    // upper tail normal approx
+    const p = 0.5*erfc(zz/Math.SQRT2);
+    return Math.max(0, Math.min(1,p));
+  }
+  function erfc(x){
+    const t = 1/(1+0.3275911*Math.abs(x));
+    const y = 1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);
+    const r = x>=0? y : 2-y;
+    return r;
+  }
+
+  function existingCombos(rows){
+    const set = new Set();
+    rows.forEach(r=> set.add(r.main.slice().sort((a,b)=>a-b).join(',')));
+    return set;
+  }
+
+  function randSample(max, count){
+    const pool = [];
+    for(let i=1;i<=max;i++) pool.push(i);
+    for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+    return pool.slice(0,count).sort((a,b)=>a-b);
+  }
+
+  function weightedSample(counts, max, count, favorHigh){
+    const maxCount = Math.max(...counts.slice(1,max+1));
+    const weights = [];
+    for(let i=1;i<=max;i++){
+      const c = counts[i];
+      const w = favorHigh ? (c+1) : (maxCount - c + 2);
+      weights.push({n:i, w});
+    }
+    const chosen = new Set();
+    let attempts=0;
+    while(chosen.size<count && attempts<3000){
+      attempts++;
+      const total = weights.filter(x=>!chosen.has(x.n)).reduce((a,b)=>a+b.w,0);
+      let r = Math.random()*total;
+      for(const x of weights){
+        if(chosen.has(x.n)) continue;
+        r -= x.w;
+        if(r<=0){ chosen.add(x.n); break; }
+      }
+    }
+    return Array.from(chosen).sort((a,b)=>a-b);
+  }
+
+  function balancedSample(max, count){
+    const bandSize = max/count;
+    const chosen = [];
+    for(let i=0;i<count;i++){
+      const lo = Math.floor(i*bandSize)+1;
+      const hi = Math.floor((i+1)*bandSize);
+      const n = lo + Math.floor(Math.random()*(hi-lo+1));
+      chosen.push(n);
+    }
+    return Array.from(new Set(chosen)).sort((a,b)=>a-b).length===count
+      ? chosen.sort((a,b)=>a-b)
+      : randSample(max,count);
+  }
+
+  function generateLine(gameKey, mode, avoidExisting){
+    const game = GAMES[gameKey];
+    const mainCounts = freqCount(game.rows, 'main', game.mainMax);
+    const combos = avoidExisting ? existingCombos(game.rows) : null;
+
+    let main, tries=0;
+    do{
+      tries++;
+      if(mode==='dip') main = randSample(game.mainMax, game.mainCount);
+      else if(mode==='hot') main = weightedSample(mainCounts, game.mainMax, game.mainCount, true);
+      else if(mode==='cold') main = weightedSample(mainCounts, game.mainMax, game.mainCount, false);
+      else main = balancedSample(game.mainMax, game.mainCount);
+    } while(combos && combos.has(main.join(',')) && tries<200);
+
+    const line = {main};
+    if(game.hasStar){
+      const starRows = game.starRows;
+      const starCounts = freqCount(starRows, 'stars', game.starMax);
+      let stars;
+      if(mode==='dip') stars = randSample(game.starMax, game.starCount);
+      else if(mode==='hot') stars = weightedSample(starCounts, game.starMax, game.starCount, true);
+      else if(mode==='cold') stars = weightedSample(starCounts, game.starMax, game.starCount, false);
+      else stars = randSample(game.starMax, game.starCount);
+      line.stars = stars;
+    }
+    if(game.hasBonus){
+      line.bonus = null;
+    }
+    return line;
+  }
+
+  function renderLine(line, game){
+    const div = document.createElement('div');
+    div.className='line';
+    line.main.forEach(n=>{
+      const b=document.createElement('div'); b.className='ball '+ballColor(n); b.textContent=n; div.appendChild(b);
+    });
+    if(line.stars) line.stars.forEach(n=>{
+      const b=document.createElement('div'); b.className='ball star'; b.textContent=n; div.appendChild(b);
+    });
+    return div;
+  }
+
+  function ballColor(n){
+    return n<10?'c-white':n<20?'c-blue':n<30?'c-pink':n<40?'c-green':n<50?'c-yellow':'c-purple';
+  }
+
+  let currentMode='dip', avoidExisting=true;
+  const linesOut = $('#linesOut');
+
+  function doGenerate(n){
+    linesOut.innerHTML='';
+    for(let i=0;i<n;i++){
+      const line = generateLine(current, currentMode, avoidExisting);
+      linesOut.appendChild(renderLine(line, GAMES[current]));
+    }
+  }
+
+  $('#genBtn').addEventListener('click', ()=>doGenerate(1));
+  $('#genFiveBtn').addEventListener('click', ()=>doGenerate(5));
+  $('#clearBtn').addEventListener('click', ()=>linesOut.innerHTML='');
+  $('#neverDrawnToggle').addEventListener('change', e=>{ avoidExisting = e.target.checked; });
+
+  document.querySelectorAll('.mode-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentMode = btn.dataset.mode;
+    });
+  });
+
+  function renderStats(){
+    const game = GAMES[current];
+    const mainCounts = freqCount(game.rows, 'main', game.mainMax);
+    const expected = game.rows.length * game.mainCount / game.mainMax;
+    let chi2=0;
+    for(let i=1;i<=game.mainMax;i++){ const d=mainCounts[i]-expected; chi2+=d*d/expected; }
+    const df = game.mainMax-1;
+    const p = chiToP(chi2, df);
+
+    const grid = $('#statGrid'); grid.innerHTML='';
+    const tiles = [
+      [game.rows.length.toLocaleString(), 'draws analysed'],
+      [game.rows[0].date+' → '+game.rows[game.rows.length-1].date, 'date range'],
+      ['p = '+p.toFixed(2), 'chi-square test, main numbers'],
+      [game.jackpotOdds, 'odds of jackpot, any single line']
+    ];
+    tiles.forEach(([k,l])=>{
+      const d=document.createElement('div'); d.className='stat-tile';
+      d.innerHTML=`<div class="k num">${k}</div><div class="l">${l}</div>`;
+      grid.appendChild(d);
+    });
+
+    const verdict = $('#verdictBox');
+    const significant = p < 0.01;
+    verdict.innerHTML = significant
+      ? `<div>⚠ <b>Borderline signal detected</b> (p=${p.toFixed(3)}) — still almost certainly noise from testing many numbers at once, not a real bias. Regulated draw machines are audited specifically to prevent exploitable mechanical bias, unlike some physical casino roulette wheels.</div>`
+      : `<div><b>No statistically real pattern.</b> p=${p.toFixed(2)} means the frequency spread is exactly what you'd expect from a fair, random draw. Every number is equally likely on the next draw regardless of its past history.</div>`;
+
+    $('#rangeText').textContent = `${game.label}: ${game.rows.length.toLocaleString()} draws, ${game.rows[0].date} to ${game.rows[game.rows.length-1].date}.`;
+
+    const chart = $('#freqChart'); chart.innerHTML='';
+    const labels = $('#freqLabels'); labels.innerHTML='';
+    const maxC = Math.max(...mainCounts.slice(1));
+    const sorted = [...mainCounts.keys()].slice(1).sort((a,b)=>mainCounts[b]-mainCounts[a]);
+    const top5 = new Set(sorted.slice(0,5));
+    const bottom5 = new Set(sorted.slice(-5));
+    for(let i=1;i<=game.mainMax;i++){
+      const bar = document.createElement('div');
+      bar.className='bar' + (top5.has(i)?' hot':'') + (bottom5.has(i)?' cold':'');
+      bar.style.height = Math.max(4,(mainCounts[i]/maxC*140))+'px';
+      bar.title = `Number ${i}: drawn ${mainCounts[i]} times`;
+      chart.appendChild(bar);
+    }
+    [1, Math.round(game.mainMax/4), Math.round(game.mainMax/2), Math.round(game.mainMax*3/4), game.mainMax].forEach(n=>{
+      const s=document.createElement('span'); s.textContent=n; labels.appendChild(s);
+    });
+  }
+
+  function populateChecker(){
+    const game = GAMES[current];
+    const sel = $('#checkDraw');
+    sel.innerHTML='';
+    const optLatest = document.createElement('option'); optLatest.value='latest'; optLatest.textContent='Most recent draw ('+game.rows[game.rows.length-1].date+')';
+    sel.appendChild(optLatest);
+    const recent = game.rows.slice(-20).reverse();
+    recent.forEach(r=>{
+      const o=document.createElement('option'); o.value=r.date; o.textContent=r.date;
+      sel.appendChild(o);
+    });
+  }
+
+  $('#checkBtn').addEventListener('click', ()=>{
+    const game = GAMES[current];
+    const raw = $('#checkInput').value.trim();
+    const result = $('#checkResult');
+    if(!raw){ result.classList.remove('show'); return; }
+    const nums = raw.split(/[,\s]+/).map(x=>parseInt(x,10)).filter(n=>!isNaN(n));
+    const sel = $('#checkDraw').value;
+    const draw = sel==='latest' ? game.rows[game.rows.length-1] : game.rows.find(r=>r.date===sel);
+    if(!draw){ result.textContent='Draw not found.'; result.classList.add('show'); return; }
+    const matched = nums.filter(n=>draw.main.includes(n));
+    let bonusMsg='';
+    if(game.hasBonus && nums.includes(draw.bonus)) bonusMsg = ` Bonus ball ${draw.bonus} also matched.`;
+    let starMsg='';
+    if(game.hasStar){
+      const starMatch = nums.filter(n=>draw.stars.includes(n));
+      starMsg = ` Stars matched: ${starMatch.length} (${starMatch.join(', ')||'none'}).`;
+    }
+    result.innerHTML = `Draw ${draw.date}: <span class="num">${draw.main.join(', ')}</span>${game.hasBonus?' bonus '+draw.bonus:''}${game.hasStar?' + stars '+draw.stars.join(', '):''}<br>
+      You matched <b>${matched.length} of ${game.mainCount}</b> main numbers (${matched.join(', ')||'none'}).${bonusMsg}${starMsg}`;
+    result.classList.add('show');
+  });
+
+  // ---- Focus Circles: social-only, backed by Supabase `circles` + `circle_members` ----
+  // No mechanism here changes draw odds. This exists purely so a group
+  // can rally around a shared number for fun; it is labeled as such in
+  // the UI and nowhere claims otherwise.
+  let circleChannel = null;
+
+  async function loadCircles(gameKey){
+    const { data: circles, error } = await supa.from('circles').select('id,name,focus_number,created_by').eq('game', gameKey).limit(100);
+    if(error) return null;
+    const ids = (circles||[]).map(c=>c.id);
+    let membersByCircle = {};
+    if(ids.length){
+      const { data: members } = await supa.from('circle_members').select('circle_id,user_id').in('circle_id', ids);
+      (members||[]).forEach(m=>{
+        (membersByCircle[m.circle_id] = membersByCircle[m.circle_id] || []).push(m.user_id);
+      });
+    }
+    return (circles||[]).map(c=>({ id:c.id, name:c.name, focusNumber:c.focus_number, members: membersByCircle[c.id]||[] }));
+  }
+
+  async function renderCircles(docs){
+    const list = $('#circleList');
+    list.innerHTML='';
+    if(!docs || docs.length===0){
+      list.innerHTML = '<div class="circle-empty">No circles yet for this game — start one above.</div>';
+      return;
+    }
+    const allIds = new Set();
+    docs.forEach(d=> d.members.forEach(id=>allIds.add(id)));
+    const profiles = await profilesFor(Array.from(allIds));
+
+    docs.forEach(d=>{
+      const members = d.members;
+      const joined = myId && members.includes(myId);
+      const card = document.createElement('div');
+      card.className='circle-card';
+      card.innerHTML = `
+        <div class="ball ${ballColor(d.focusNumber)}" style="width:34px;height:34px;font-size:.82rem;">${d.focusNumber}</div>
+        <div class="cinfo">
+          <div class="cname"></div>
+          <div class="cmeta">${members.length} focused</div>
+        </div>
+        <button class="join ${joined?'joined':''}" data-id="${d.id}" data-joined="${joined?1:0}">${joined?'In this circle':'Join'}</button>
+      `;
+      card.querySelector('.cname').textContent = d.name;
+      list.appendChild(card);
+    });
+
+    list.querySelectorAll('button.join').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        if(!myId){ alert('Sign in to join a circle.'); return; }
+        const id = btn.dataset.id;
+        const alreadyJoined = btn.dataset.joined==='1';
+        try{
+          if(alreadyJoined){
+            await supa.from('circle_members').delete().eq('circle_id', id).eq('user_id', myId);
+          } else {
+            await supa.from('circle_members').insert({ circle_id:id, user_id:myId });
+          }
+          await refreshCircles(current);
+        }catch(e){ /* last-writer-wins race is fine for a social feature */ }
+      });
+    });
+  }
+
+  async function refreshCircles(gameKey){
+    const docs = await loadCircles(gameKey);
+    if(docs===null){ $('#circleList').innerHTML = '<div class="circle-empty">Circles are unavailable right now.</div>'; return; }
+    renderCircles(docs);
+  }
+
+  function subscribeCircles(gameKey){
+    if(circleChannel){ supa.removeChannel(circleChannel); circleChannel=null; }
+    $('#circleList').innerHTML = '<div class="circle-empty">Loading circles…</div>';
+    refreshCircles(gameKey);
+    circleChannel = supa.channel('circles-'+gameKey)
+      .on('postgres_changes', { event:'*', schema:'public', table:'circles' }, ()=> refreshCircles(gameKey))
+      .on('postgres_changes', { event:'*', schema:'public', table:'circle_members' }, ()=> refreshCircles(gameKey))
+      .subscribe();
+  }
+
+  $('#circleCreateBtn').addEventListener('click', async ()=>{
+    const status = $('#circleStatus');
+    if(!myId){ status.textContent='Sign in to start a circle.'; return; }
+    const name = $('#circleName').value.trim().slice(0,40);
+    const num = parseInt($('#circleNumber').value,10);
+    const game = GAMES[current];
+    if(!name){ status.textContent='Give your circle a name.'; return; }
+    if(isNaN(num) || num<1 || num>game.mainMax){ status.textContent=`Focus number must be between 1 and ${game.mainMax}.`; return; }
+    status.textContent='Starting…';
+    try{
+      const { data, error } = await supa.from('circles').insert({
+        name, focus_number:num, game:current, created_by: myId
+      }).select('id').single();
+      if(error) throw error;
+      await supa.from('circle_members').insert({ circle_id: data.id, user_id: myId });
+      $('#circleName').value=''; $('#circleNumber').value='';
+      status.textContent='Circle started. Purely for fun — it does not change the odds.';
+      await refreshCircles(current);
+    }catch(e){
+      status.textContent = 'Could not start a circle right now.';
+    }
+  });
+
+  // ---- Prediction Test: a real, falsifiable test against chance ----
+  // Predictions are locked before a draw (19:30 UK time on draw day);
+  // hit-rate is measured against the real result once it's known. Nothing
+  // here presupposes an outcome — the leaderboard shows whatever the
+  // numbers actually show.
+  let predictChannel = null;
+  const CUTOFF_MINS = 19*60+30; // 19:30 UK time
+  const BONUS = {
+    lotto: { name:'Bonus ball', count:1, max:59, cls:'bonus', distinctFromMain:true },
+    euro:  { name:'Lucky Stars', count:2, max:12, cls:'star', distinctFromMain:false }
+  };
+  const DRAW_DOWS = { lotto:[3,6], euro:[2,5] };
+
+  const pt = { game:'lotto', date:null, main:[], bonus:[], pool:'main' };
+  let ptPreds = [];      // all predictions rows for both games
+  let ptResults = {};    // game -> date -> {main, bonus}
+  let hasBonusColumn = true;
+
+  function londonNow(){
+    const parts = {};
+    new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'})
+      .formatToParts(new Date()).forEach(p=>parts[p.type]=p.value);
+    return { date:`${parts.year}-${parts.month}-${parts.day}`, mins: (+parts.hour)*60 + (+parts.minute) };
+  }
+  function addDays(iso, n){
+    const d = new Date(iso+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n);
+    return d.toISOString().slice(0,10);
+  }
+  function dowOf(iso){ return new Date(iso+'T12:00:00Z').getUTCDay(); }
+  function fmtDate(iso, opts){
+    return new Date(iso+'T12:00:00Z').toLocaleDateString('en-GB', Object.assign({timeZone:'UTC'}, opts||{weekday:'short',day:'numeric',month:'short'}));
+  }
+  function isOpen(iso){
+    const now = londonNow();
+    return iso > now.date || (iso===now.date && now.mins < CUTOFF_MINS);
+  }
+  function upcomingDraws(gameKey, n){
+    const now = londonNow();
+    const out = [];
+    for(let add=0; out.length<n && add<60; add++){
+      const d = addDays(now.date, add);
+      if(DRAW_DOWS[gameKey].includes(dowOf(d)) && isOpen(d)) out.push(d);
+    }
+    return out;
+  }
+  function lastDrawDate(gameKey){
+    const now = londonNow();
+    for(let add=0; add<8; add++){
+      const d = addDays(now.date, -add);
+      if(DRAW_DOWS[gameKey].includes(dowOf(d)) && !isOpen(d)) return d;
+    }
+    return now.date;
+  }
+  // kept for compatibility with older callers
+  function nextDrawDate(gameKey){ return upcomingDraws(gameKey,1)[0]; }
+
+  function expectedHits(game){ return game.mainCount*game.mainCount/game.mainMax; }
+  function expectedBonusHits(gameKey){
+    // Lotto: your bonus pick matches the drawn bonus ball = 1/59.
+    // Euro: 2 picked stars vs 2 drawn from 12 = 2*2/12.
+    return gameKey==='lotto' ? 1/59 : 4/12;
+  }
+
+  function parseNums(raw, game){
+    const nums = raw.split(/[,\s]+/).map(x=>parseInt(x,10)).filter(n=>!isNaN(n));
+    const unique = Array.from(new Set(nums));
+    if(unique.length!==game.mainCount) return null;
+    if(unique.some(n=>n<1||n>game.mainMax)) return null;
+    return unique.sort((a,b)=>a-b);
+  }
+
+  // Official results: draws.json first, then any admin-entered results.
+  function resultFor(gameKey, date){
+    const fromDb = ptResults[gameKey] && ptResults[gameKey][date];
+    if(fromDb && fromDb.rounds && fromDb.rounds.length) return fromDb;   // official feed: every round
+    const row = GAMES[gameKey].rows.find(r=>r.date===date);
+    if(row) return { main: row.main, bonus: gameKey==='lotto' ? [row.bonus] : row.stars };
+    return fromDb || null;
+  }
+  // A result as a list of rounds. Since 10 Jun 2026 UK Lotto draws two rounds and every
+  // ticket is checked against both; each (prediction, round) pair is one scored "line".
+  function roundsOf(res, gameKey){
+    if(res.rounds && res.rounds.length) return res.rounds.map(r=>({ main:r.main, bonus: gameKey==='lotto' ? (r.bonus!=null?[r.bonus]:[]) : (r.stars||[]) }));
+    return [{ main:res.main, bonus:res.bonus||[] }];
+  }
+  function scorePrediction(p){
+    const res = resultFor(p.game, p.target_date);
+    if(!res) return null;
+    const bonus = p.bonus || [];
+    const lines = roundsOf(res, p.game).map(r=>({
+      r,
+      mainHits: p.numbers.filter(n=>r.main.includes(n)),
+      bonusHits: (r.bonus && r.bonus.length) ? bonus.filter(n=>r.bonus.includes(n)) : [],
+      bonusKnown: !!(r.bonus && r.bonus.length)
+    }));
+    const best = lines.reduce((a,b)=> b.mainHits.length>a.mainHits.length ? b : a);
+    return { res, lines, mainHits: best.mainHits, bonusHits: best.bonusHits, bonusKnown: best.bonusKnown };
+  }
+
+  // ---- picker rendering ----
+  const ptStatus = $('#predictStatus');
+  function setStatus(msg, kind){ ptStatus.textContent = msg||''; ptStatus.className = 'pt-status'+(kind?' '+kind:''); }
+
+  function myPred(gameKey, date){
+    return ptPreds.find(p=>p.user_id===myId && p.game===gameKey && p.target_date===date);
+  }
+
+  function renderDates(){
+    const wrap = $('#ptDates');
+    const dates = upcomingDraws(pt.game, 6);
+    if(!dates.includes(pt.date)) pt.date = dates[0];
+    wrap.innerHTML = '';
+    dates.forEach(d=>{
+      const b = document.createElement('button');
+      b.type='button'; b.className='date-chip'+(d===pt.date?' active':'');
+      b.innerHTML = `<span class="dow">${fmtDate(d,{weekday:'short'})}</span><span class="dd">${fmtDate(d,{day:'numeric'})}</span><span class="mm">${fmtDate(d,{month:'short'})}</span>`;
+      if(myId && myPred(pt.game, d)){ const dot=document.createElement('i'); dot.className='mine'; dot.title='You have a prediction for this draw'; b.appendChild(dot); }
+      b.addEventListener('click', ()=>{ pt.date = d; loadExistingPick(); renderPicker(); });
+      wrap.appendChild(b);
+    });
+    const now = londonNow();
+    $('#ptDateHint').textContent = pt.date===now.date
+      ? 'Tonight’s draw — predictions close at 7:30pm UK time.'
+      : `Predictions close at 7:30pm UK time on ${fmtDate(pt.date,{weekday:'long',day:'numeric',month:'long'})}.`;
+  }
+
+  function loadExistingPick(){
+    const mine = myId ? myPred(pt.game, pt.date) : null;
+    if(mine){
+      pt.main = mine.numbers.slice();
+      pt.bonus = (mine.bonus||[]).slice();
+      pt.pool = 'main';
+    } else {
+      pt.main = []; pt.bonus = []; pt.pool = 'main';
+    }
+  }
+
+  function renderPicker(){
+    const game = GAMES[pt.game];
+    const bc = BONUS[pt.game];
+    // segmented control
+    document.querySelectorAll('#ptGame button').forEach(b=>b.classList.toggle('active', b.dataset.game===pt.game));
+    renderDates();
+
+    // ticket preview
+    const ticket = $('#ptTicket'); ticket.innerHTML='';
+    const mainSorted = pt.main.slice().sort((a,b)=>a-b);
+    for(let i=0;i<game.mainCount;i++){
+      const n = mainSorted[i];
+      if(n){ const el=document.createElement('button'); el.type='button'; el.className='ball main '+ballColor(n); el.textContent=n; el.title='Remove '+n; el.addEventListener('click',()=>{ pt.main=pt.main.filter(x=>x!==n); pt.pool='main'; renderPicker(); }); ticket.appendChild(el); }
+      else { const s=document.createElement('span'); s.className='slot'; ticket.appendChild(s); }
+    }
+    const plus=document.createElement('span'); plus.className='plus'; plus.textContent='+'; ticket.appendChild(plus);
+    const bonusSorted = pt.bonus.slice().sort((a,b)=>a-b);
+    for(let i=0;i<bc.count;i++){
+      const n = bonusSorted[i];
+      if(n){ const el=document.createElement('button'); el.type='button'; el.className='ball '+bc.cls+(bc.cls==='bonus'?' '+ballColor(n):''); el.textContent=n; el.title='Remove '+n; el.addEventListener('click',()=>{ pt.bonus=pt.bonus.filter(x=>x!==n); pt.pool='bonus'; renderPicker(); }); ticket.appendChild(el); }
+      else { const s=document.createElement('span'); s.className='slot '+bc.cls+'-slot'; ticket.appendChild(s); }
+    }
+
+    // tabs
+    $('#ptBonusName').textContent = bc.name;
+    $('#ptMainCount').textContent = `${pt.main.length}/${game.mainCount}`;
+    $('#ptBonusCount').textContent = `${pt.bonus.length}/${bc.count}`;
+    document.querySelectorAll('#ptTabs button').forEach(b=>{
+      b.classList.toggle('active', b.dataset.pool===pt.pool);
+      b.classList.toggle('full', b.dataset.pool==='main' ? pt.main.length===game.mainCount : pt.bonus.length===bc.count);
+    });
+
+    // grid
+    const grid = $('#ptGrid'); grid.innerHTML='';
+    const isMain = pt.pool==='main';
+    const max = isMain ? game.mainMax : bc.max;
+    grid.classList.toggle('star-grid', !isMain && pt.game==='euro');
+    for(let n=1;n<=max;n++){
+      const b=document.createElement('button');
+      b.type='button'; b.className='pick'; b.textContent=n; b.dataset.n=n;
+      const on = isMain ? pt.main.includes(n) : pt.bonus.includes(n);
+      if(on){ b.classList.add('on'); if(!isMain) b.classList.add(bc.cls); if(isMain || bc.cls==='bonus') b.classList.add(ballColor(n)); }
+      b.setAttribute('aria-pressed', on?'true':'false');
+      if(!isMain && bc.distinctFromMain && pt.main.includes(n)){ b.classList.add('taken'); b.disabled=true; b.title='Already one of your main numbers'; }
+      grid.appendChild(b);
+    }
+
+    // button label
+    const existing = myId && myPred(pt.game, pt.date);
+    $('#predictBtn').textContent = existing ? 'Update prediction' : 'Lock it in';
+  }
+
+  $('#ptGrid').addEventListener('click', e=>{
+    const b = e.target.closest('.pick'); if(!b || b.disabled) return;
+    const n = +b.dataset.n;
+    const game = GAMES[pt.game], bc = BONUS[pt.game];
+    setStatus('');
+    if(pt.pool==='main'){
+      if(pt.main.includes(n)) pt.main = pt.main.filter(x=>x!==n);
+      else if(pt.main.length < game.mainCount){
+        pt.main.push(n);
+        if(bc.distinctFromMain) pt.bonus = pt.bonus.filter(x=>x!==n);
+        if(pt.main.length===game.mainCount && pt.bonus.length<bc.count) pt.pool='bonus';
+      } else { setStatus(`You already have ${game.mainCount} main numbers — tap one to remove it first.`); }
+    } else {
+      if(pt.bonus.includes(n)) pt.bonus = pt.bonus.filter(x=>x!==n);
+      else if(pt.bonus.length < bc.count) pt.bonus.push(n);
+      else if(bc.count===1) pt.bonus = [n];
+      else { setStatus(`You already have ${bc.count} ${bc.name} — tap one to remove it first.`); }
+    }
+    renderPicker();
+  });
+  document.querySelectorAll('#ptTabs button').forEach(b=> b.addEventListener('click', ()=>{ pt.pool=b.dataset.pool; renderPicker(); }));
+  document.querySelectorAll('#ptGame button').forEach(b=> b.addEventListener('click', ()=>{
+    if(pt.game===b.dataset.game) return;
+    setPredictGame(b.dataset.game);
+  }));
+  $('#ptClearBtn').addEventListener('click', ()=>{ pt.main=[]; pt.bonus=[]; pt.pool='main'; setStatus(''); renderPicker(); });
+  $('#ptDipBtn').addEventListener('click', ()=>{
+    const game = GAMES[pt.game], bc = BONUS[pt.game];
+    pt.main = randSample(game.mainMax, game.mainCount);
+    if(bc.distinctFromMain){
+      let b; do{ b = 1+Math.floor(Math.random()*bc.max); } while(pt.main.includes(b));
+      pt.bonus = [b];
+    } else pt.bonus = randSample(bc.max, bc.count);
+    pt.pool='main'; setStatus('Random line — every line has exactly the same odds.'); renderPicker();
+  });
+
+  function setPredictGame(gameKey){
+    pt.game = gameKey; pt.date = null;
+    setStatus('');
+    renderDates(); loadExistingPick(); renderPicker();
+    subscribePredictions(gameKey);
+  }
+
+  // ---- your predictions list ----
+  function ballsHtml(nums, cls, hits){
+    return nums.slice().sort((a,b)=>a-b).map(n=>`<span class="ball ${cls}${cls!=='star'?' '+ballColor(n):''}${hits&&hits.includes(n)?' hit':''}">${n}</span>`).join('');
+  }
+  function renderMine(){
+    const box = $('#ptMine');
+    if(!myId){ box.innerHTML = '<div class="circle-empty">Sign in to make and track predictions.</div>'; return; }
+    const mine = ptPreds.filter(p=>p.user_id===myId).sort((a,b)=> b.target_date.localeCompare(a.target_date));
+    if(!mine.length){ box.innerHTML = '<div class="circle-empty">No predictions yet — pick your numbers above and lock them in.</div>'; return; }
+    box.innerHTML='';
+    mine.slice(0,30).forEach(p=>{
+      const game = GAMES[p.game], bc = BONUS[p.game];
+      const sc = scorePrediction(p);
+      const open = isOpen(p.target_date);
+      const row = document.createElement('div'); row.className='pm-row';
+      let state;
+      if(sc){
+        const exp = expectedHits(game).toFixed(2);
+        state = sc.lines.map((l,i)=>{
+          const bonusTxt = l.bonusKnown && (p.bonus||[]).length ? ` · ${bc.name.toLowerCase()}: <b>${l.bonusHits.length}/${bc.count}</b>` : '';
+          return `${sc.lines.length>1?`Round ${i+1}: `:''}matched <b>${l.mainHits.length} of ${game.mainCount}</b>${bonusTxt}`;
+        }).join('<br>') + `<br>chance average ${exp} per round`;
+      } else if(open){
+        state = 'Open — editable until 7:30pm UK';
+      } else {
+        state = 'Locked · waiting for the result';
+      }
+      row.innerHTML = `
+        <div class="pm-when"><b>${fmtDate(p.target_date)}</b><span>${game.label}</span></div>
+        <div class="pm-balls">${ballsHtml(p.numbers,'', sc&&sc.mainHits)}${(p.bonus||[]).length?ballsHtml(p.bonus, bc.cls, sc&&sc.bonusHits):''}</div>
+        <div class="pm-state">${state}</div>`;
+      if(open){
+        const acts = document.createElement('div'); acts.className='pm-actions';
+        const edit = document.createElement('button'); edit.type='button'; edit.textContent='Edit';
+        edit.addEventListener('click', ()=>{
+          if(pt.game!==p.game){ pt.game=p.game; subscribePredictions(p.game); }
+          pt.date=p.target_date; loadExistingPick(); renderPicker();
+          $('#ptGame').scrollIntoView({behavior:'smooth', block:'start'});
+        });
+        const del = document.createElement('button'); del.type='button'; del.textContent='Withdraw';
+        del.addEventListener('click', async ()=>{
+          const { error } = await supa.from('predictions').delete().eq('user_id', myId).eq('game', p.game).eq('target_date', p.target_date);
+          if(error){ setStatus('Could not withdraw that one.', 'err'); return; }
+          ptPreds = ptPreds.filter(x=>x!==p);
+          if(p.game===pt.game && p.target_date===pt.date) loadExistingPick();
+          renderPicker(); renderMine();
+        });
+        acts.append(edit, del); row.appendChild(acts);
+      }
+      box.appendChild(row);
+    });
+  }
+
+  // ---- leaderboard ----
+  async function renderLeaderboard(gameKey){
+    const board = $('#leaderboard');
+    const game = GAMES[gameKey], bc = BONUS[gameKey];
+    $('#lbGameName').textContent = game.label;
+    const totals = {};
+    ptPreds.filter(p=>p.game===gameKey).forEach(p=>{
+      const sc = scorePrediction(p);
+      if(!sc) return;
+      const t = totals[p.user_id] = totals[p.user_id] || {hits:0, expected:0, n:0, bHits:0, bExpected:0};
+      t.n += 1;
+      sc.lines.forEach(l=>{
+        t.hits += l.mainHits.length;
+        t.expected += expectedHits(game);
+        if(l.bonusKnown && (p.bonus||[]).length===bc.count){ t.bHits += l.bonusHits.length; t.bExpected += expectedBonusHits(gameKey); }
+      });
+    });
+
+    const rows = Object.entries(totals).map(([uid,t])=>({uid, ...t, ratio: t.expected>0 ? t.hits/t.expected : 0}));
+    rows.sort((a,b)=>b.ratio-a.ratio || b.n-a.n);
+
+    board.innerHTML='';
+    if(rows.length===0){
+      board.innerHTML = `<div class="circle-empty">No scored ${game.label} predictions yet — they’re scored automatically once the draw result is in.</div>`;
+      return;
+    }
+    const profiles = await profilesFor(rows.map(r=>r.uid));
+    rows.forEach((r,i)=>{
+      const name = (profiles[r.uid]&&profiles[r.uid].name) || 'Someone';
+      const row = document.createElement('div');
+      row.className='lb-row';
+      const bonusTxt = r.bExpected>0 ? ` · ${bc.name}: <b>${r.bHits}</b> vs <b>${r.bExpected.toFixed(2)}</b>` : '';
+      row.innerHTML = `<span class="lb-rank">#${i+1}</span><span class="lb-name"></span>
+        <span class="lb-stat">Main hits: <b>${r.hits}</b> · Expected by chance: <b>${r.expected.toFixed(1)}</b>${bonusTxt} · over ${r.n} draw${r.n===1?'':'s'}</span>`;
+      row.querySelector('.lb-name').textContent = name;
+      board.appendChild(row);
+    });
+  }
+
+  // ---- Community statistics: everyone's results vs pure chance ----
+  function comb(n,r){ if(r<0||r>n) return 0; let x=1; for(let i=1;i<=r;i++) x=x*(n-r+i)/i; return x; }
+  function hyperP(N,k,h){ return comb(k,h)*comb(N-k,k-h)/comb(N,k); }
+  function pct(x,d){ return (x*100).toFixed(d==null?1:d)+'%'; }
+
+  function tally(list, game){
+    const N=game.mainMax, k=game.mainCount;
+    const t = { n:0, hits:0, picked:0, exp:0, variance:0, dist:new Array(k+1).fill(0), best:0, bHits:0, bPicked:0 };
+    const p1 = k/N;
+    t.n = 0;
+    list.forEach(({p,sc})=>{
+      sc.lines.forEach(l=>{
+        const h = l.mainHits.length;
+        t.n++;
+        t.hits += h; t.picked += k; t.exp += k*p1; t.dist[h]++; t.best = Math.max(t.best, h);
+        t.variance += k*p1*(1-p1)*(N-k)/(N-1);
+        if(l.bonusKnown && (p.bonus||[]).length===BONUS[p.game].count){ t.bHits += l.bonusHits.length; t.bPicked += BONUS[p.game].count; }
+      });
+    });
+    t.rate = t.picked ? t.hits/t.picked : 0;
+    t.chance = p1;
+    t.z = t.variance>0 ? (t.hits - t.exp)/Math.sqrt(t.variance) : 0;
+    return t;
+  }
+
+  function renderCommunity(gameKey){
+    const box = $('#communityStats');
+    const game = GAMES[gameKey], bc = BONUS[gameKey];
+    $('#csGameName').textContent = game.label;
+    const scoredAll = ptPreds.filter(p=>p.game===gameKey).map(p=>({p, sc:scorePrediction(p)})).filter(x=>x.sc);
+    if(!scoredAll.length){
+      box.innerHTML = `<div class="circle-empty">No scored ${game.label} predictions yet. Stats appear here once the first draw result is in.</div>`;
+      return;
+    }
+    const all = tally(scoredAll, game);
+    const mineList = myId ? scoredAll.filter(x=>x.p.user_id===myId) : [];
+    const mine = mineList.length ? tally(mineList, game) : null;
+    const players = new Set(scoredAll.map(x=>x.p.user_id)).size;
+    const draws = new Set(scoredAll.map(x=>x.p.target_date)).size;
+
+    const tiles = [
+      { k:pct(all.rate), l:'Community hit rate', s:`chance gives ${pct(all.chance)}` },
+      mine ? { cls:'you', k:pct(mine.rate), l:'Your hit rate', s: mine.n<5 ? `${mine.n} line${mine.n===1?'':'s'} so far — too early to tell` : `over ${mine.n} lines · community ${pct(all.rate)}` }
+           : { cls:'you', k:'—', l:'Your hit rate', s: myId ? 'no scored predictions yet' : 'sign in to see yours' },
+      { k:`${all.hits} / ${all.exp.toFixed(1)}`, l:'Hits vs expected', s:'actual vs chance average' },
+      { k:`${all.best}/${game.mainCount}`, l:'Best line so far', s:`${all.n} lines · ${players} player${players===1?'':'s'} · ${draws} draw${draws===1?'':'s'}` }
+    ];
+    if(all.bPicked){
+      const bChance = gameKey==='lotto' ? 1/59 : 2/12;
+      tiles.push({ k:pct(all.bHits/all.bPicked), l:bc.name+' hit rate', s:`chance gives ${pct(bChance)}` });
+    }
+
+    let verdict;
+    if(all.n < 30){
+      verdict = `<b>Too early to tell.</b> There are only ${all.n} scored line${all.n===1?'':'s'}. With a sample this small, a high or low hit rate says almost nothing — luck swings wildly. The picture gets meaningful at around 30+ lines.`;
+    } else if(all.z >= 2.33){
+      verdict = `<b>Above chance.</b> The community is hitting ${all.hits} against ${all.exp.toFixed(1)} expected (${all.z.toFixed(1)} standard deviations above average). That is unlikely to be pure luck — worth keeping an eye on as more draws come in.`;
+    } else if(all.z <= -2.33){
+      verdict = `<b>Below chance.</b> The community is hitting ${all.hits} against ${all.exp.toFixed(1)} expected — fewer than random picks would manage, which is itself just a quirk of the sample.`;
+    } else {
+      verdict = `<b>In line with chance.</b> ${all.hits} hits against ${all.exp.toFixed(1)} expected (${all.z>=0?'+':''}${all.z.toFixed(1)} standard deviations). That is what pure luck looks like — so far nobody’s picks beat random.`;
+    }
+
+    // distribution of hits per line: observed vs expected
+    const k = game.mainCount, N = game.mainMax;
+    const rows = [];
+    for(let h=0; h<=k; h++){
+      const e = hyperP(N,k,h), o = all.dist[h]/all.n;
+      rows.push({h, e, o, oc:all.dist[h], ec:e*all.n});
+    }
+    const maxShare = Math.max(...rows.map(r=>Math.max(r.e, r.o)), 0.01);
+    const hist = rows.map(r=>`<div class="cs-hrow">
+        <span class="lab">${r.h} hit${r.h===1?'':'s'}</span>
+        <div class="cs-bars"><i class="obs" style="width:${(r.o/maxShare*100).toFixed(1)}%"></i><i class="exp" style="width:${(r.e/maxShare*100).toFixed(1)}%"></i></div>
+        <span class="val"><b>${r.oc}</b> line${r.oc===1?'':'s'} · exp. ${r.ec<0.1&&r.ec>0?'<0.1':r.ec.toFixed(1)}</span>
+      </div>`).join('');
+
+    box.innerHTML = `
+      <div class="cs-tiles">${tiles.map(t=>`<div class="cs-tile ${t.cls||''}"><div class="k num">${t.k}</div><div class="l">${t.l}</div><div class="s">${t.s}</div></div>`).join('')}</div>
+      <div class="cs-verdict">${verdict}</div>
+      <div class="cs-hist">${hist}</div>
+      <div class="cs-legend"><span><i style="background:var(--brass)"></i>What players actually got</span><span><i style="background:var(--text-dim);opacity:.45"></i>What random picks would give</span></div>`;
+  }
+
+  // ---- "Your prediction vs the real draw" card (top of the Prediction Test) ----
+  let lastSyncAt = 0, syncing = false, syncNote = '';
+  async function requestSync(force){
+    if(!myId || syncing) return;
+    if(!force && Date.now()-lastSyncAt < 90000) return;
+    syncing = true; lastSyncAt = Date.now(); syncNote = 'Checking the official results…'; renderYourDrawCard();
+    try{
+      const { data, error } = await supa.rpc('sync_results');
+      if(error) throw error;
+      syncNote = 'Checked just now.';
+    }catch(e){ syncNote = 'Could not reach the results feed just now — it retries automatically.'; }
+    syncing = false;
+    await refreshPredictions(pt.game);
+  }
+  function ydcPick(){
+    const mine = ptPreds.filter(p=>p.user_id===myId);
+    if(!mine.length) return null;
+    const closed = mine.filter(p=>!isOpen(p.target_date)).sort((a,b)=>b.target_date.localeCompare(a.target_date));
+    if(closed.length) return closed[0];
+    return mine.slice().sort((a,b)=>a.target_date.localeCompare(b.target_date))[0];
+  }
+  function renderYourDrawCard(){
+    const box = $('#yourDrawCard');
+    if(!box) return;
+    const p = myId ? ydcPick() : null;
+    if(!p){ box.hidden = true; box.innerHTML=''; return; }
+    const game = GAMES[p.game], bc = BONUS[p.game];
+    const sc = scorePrediction(p);
+    const open = isOpen(p.target_date);
+    const mineBonus = p.bonus||[];
+    const title = `${game.label} · ${fmtDate(p.target_date,{weekday:'long',day:'numeric',month:'long'})}`;
+    let body = '', tag = '', foot = '';
+    const yours = `<div class="ydc-line"><div class="ydc-lab">Your numbers</div><div class="ydc-balls">${ballsHtml(p.numbers,'',sc&&sc.lines.reduce((a,l)=>a.concat(l.mainHits),[]))}${mineBonus.length?'<span class="ydc-sep"></span>'+ballsHtml(mineBonus,bc.cls,sc&&sc.lines.reduce((a,l)=>a.concat(l.bonusHits),[])):''}</div></div>`;
+    if(sc){
+      tag = (sc.res.source==='official' ? 'Official result' : 'Result');
+      const exp = expectedHits(game);
+      body = yours + sc.lines.map((l,i)=>{
+        const drawn = l.r.main.slice().sort((a,b)=>a-b).map(n=>`<span class="ball ${ballColor(n)}${p.numbers.includes(n)?' hit':' miss'}">${n}</span>`).join('');
+        const bon = (l.r.bonus||[]).map(n=>p.game==='lotto'
+          ? `<span class="ball bonus ${ballColor(n)}${mineBonus.includes(n)?' hit':' miss'}">${n}</span>`
+          : `<span class="ball star${mineBonus.includes(n)?' hit':' miss'}">${n}</span>`).join('');
+        const bt = l.bonusKnown && mineBonus.length ? ` · ${bc.name.toLowerCase()} <b>${l.bonusHits.length}/${bc.count}</b>` : '';
+        return `<div class="ydc-line"><div class="ydc-lab">${sc.lines.length>1?`Round ${i+1} drawn`:'Drawn'} — you matched <b>${l.mainHits.length} of ${game.mainCount}</b>${bt}</div><div class="ydc-balls">${drawn}${bon?'<span class="ydc-sep"></span>'+bon:''}</div></div>`;
+      }).join('');
+      const total = sc.lines.reduce((a,l)=>a+l.mainHits.length,0);
+      body += `<div class="ydc-sum">Total main-number hits: <b>${total}</b> · pure chance averages <b>${(exp*sc.lines.length).toFixed(2)}</b> for this ticket.</div>`;
+      foot = `<span>${sc.res.draw_number?`Draw ${sc.res.draw_number} · `:''}fetched from the official National Lottery results.</span>`;
+    } else if(open){
+      tag = 'Locked in';
+      body = yours + `<div class="ydc-sum">The draw hasn’t happened yet. You can change these until 7:30pm UK time on the day; after that they’re frozen and compared with the real result automatically.</div>`;
+    } else {
+      tag = 'Waiting for the result';
+      body = yours + `<div class="ydc-sum">Sales have closed. The official result usually lands within a couple of hours of the draw — this card updates itself.</div>`;
+      foot = `<button type="button" id="ydcCheck">Check for the result now</button><span>${syncNote||''}</span>`;
+    }
+    box.innerHTML = `<div class="ydc-head"><b>${title}</b><span>${tag}</span></div>${body}${foot?`<div class="ydc-foot">${foot}</div>`:''}`;
+    box.hidden = false;
+    const b = $('#ydcCheck'); if(b) b.addEventListener('click', ()=>requestSync(true));
+  }
+  function ydcNeedsResult(){
+    return !!ptPreds.some(p=>p.user_id===myId && !isOpen(p.target_date) && !resultFor(p.game,p.target_date));
+  }
+  // Keep the card honest: re-evaluate every minute; while a closed draw has no result yet, ask the server to check every 2 minutes.
+  setInterval(()=>{ renderYourDrawCard(); renderMine(); }, 60000);
+  setInterval(()=>{ if(myId && ydcNeedsResult()) requestSync(false); }, 120000);
+
+  async function refreshPredictions(gameKey){
+    const [{ data: preds }, { data: results }] = await Promise.all([
+      supa.from('predictions').select('*').limit(1000),
+      supa.from('results').select('*').limit(500)
+    ]);
+    ptPreds = preds || [];
+    if(ptPreds.length && !('bonus' in ptPreds[0])) hasBonusColumn = false;
+    ptResults = {lotto:{}, euro:{}};
+    (results||[]).forEach(r=>{ if(ptResults[r.game]) ptResults[r.game][r.target_date] = { main:r.main, bonus:r.bonus||[], rounds:r.rounds||null, source:r.source||'manual', draw_number:r.draw_number||null }; });
+    // If the current pick is empty, pre-fill with an existing prediction for this draw.
+    if(!pt.main.length && !pt.bonus.length) loadExistingPick();
+    renderPicker();
+    renderMine();
+    renderYourDrawCard();
+    renderLeaderboard(gameKey);
+    renderCommunity(gameKey);
+    if(ydcNeedsResult()) requestSync(false);
+  }
+
+  function subscribePredictions(gameKey){
+    if(predictChannel){ supa.removeChannel(predictChannel); predictChannel=null; }
+    if(!pt.date) pt.date = upcomingDraws(gameKey,1)[0];
+    renderPicker();
+
+    refreshPredictions(gameKey);
+    predictChannel = supa.channel('predictions-'+gameKey)
+      .on('postgres_changes', { event:'*', schema:'public', table:'predictions' }, ()=> refreshPredictions(pt.game))
+      .on('postgres_changes', { event:'*', schema:'public', table:'results' }, ()=> refreshPredictions(pt.game))
+      .subscribe();
+
+    $('#resultEntry').hidden = !canEditPage;
+    $('#resultGameName').textContent = GAMES[gameKey].label;
+    $('#resultBonus').placeholder = gameKey==='lotto' ? 'Bonus ball' : 'Lucky Stars (2)';
+    if(canEditPage) $('#resultDate').value = lastDrawDate(gameKey);
+  }
+
+  $('#predictBtn').addEventListener('click', async ()=>{
+    const game = GAMES[pt.game], bc = BONUS[pt.game];
+    if(!myId){ setStatus('Sign in (top of the page) to lock in a prediction.', 'err'); return; }
+    if(pt.main.length!==game.mainCount){ pt.pool='main'; renderPicker(); setStatus(`Pick ${game.mainCount - pt.main.length} more main number${game.mainCount-pt.main.length===1?'':'s'}.`, 'err'); return; }
+    if(pt.bonus.length!==bc.count){ pt.pool='bonus'; renderPicker(); setStatus(`Pick your ${bc.name.toLowerCase()} (${bc.count - pt.bonus.length} more).`, 'err'); return; }
+    if(!isOpen(pt.date)){ setStatus('Predictions for that draw have closed.', 'err'); renderPicker(); return; }
+    const row = { user_id: myId, game: pt.game, target_date: pt.date, numbers: pt.main.slice().sort((a,b)=>a-b) };
+    if(hasBonusColumn) row.bonus = pt.bonus.slice().sort((a,b)=>a-b);
+    const btn = $('#predictBtn'); btn.disabled = true;
+    try{
+      let { error } = await supa.from('predictions').upsert(row, { onConflict: 'user_id,game,target_date' });
+      if(error && /bonus/i.test(error.message||'') && row.bonus){
+        // Database not migrated yet — save main numbers only.
+        hasBonusColumn = false; delete row.bonus;
+        ({ error } = await supa.from('predictions').upsert(row, { onConflict: 'user_id,game,target_date' }));
+      }
+      if(error) throw error;
+      setStatus(`Locked in for ${game.label}, ${fmtDate(pt.date,{weekday:'long',day:'numeric',month:'long'})}. You can change it until 7:30pm UK time that day — then it’s compared with the real result automatically.`, 'ok');
+      await refreshPredictions(pt.game);
+    }catch(e){
+      setStatus(/closed|locked/i.test(e.message||'') ? 'Predictions for that draw have closed.' : 'Could not lock that in right now.', 'err');
+    }finally{ btn.disabled = false; }
+  });
+
+  $('#resultBtn').addEventListener('click', async ()=>{
+    const status = $('#resultStatus');
+    const game = GAMES[pt.game], bc = BONUS[pt.game];
+    const date = $('#resultDate').value;
+    const nums = parseNums($('#resultInput').value, game);
+    const bonusNums = Array.from(new Set($('#resultBonus').value.split(/[,\s]+/).map(x=>parseInt(x,10)).filter(n=>!isNaN(n))));
+    if(!date){ status.textContent='Pick the draw date.'; return; }
+    if(!nums){ status.textContent = `Enter exactly ${game.mainCount} distinct main numbers between 1 and ${game.mainMax}.`; return; }
+    if(bonusNums.length!==bc.count || bonusNums.some(n=>n<1||n>bc.max)){ status.textContent = `Enter ${bc.count} ${bc.name.toLowerCase()} between 1 and ${bc.max}.`; return; }
+    const row = { game: pt.game, target_date: date, main: nums, entered_by: myId, source: 'manual', rounds: null };
+    if(hasBonusColumn) row.bonus = bonusNums.sort((a,b)=>a-b);
+    try{
+      const { error } = await supa.from('results').upsert(row, { onConflict: 'game,target_date' });
+      if(error) throw error;
+      status.textContent = 'Result saved — predictions rescored.';
+      $('#resultInput').value=''; $('#resultBonus').value='';
+    }catch(e){ status.textContent = 'Could not save that result (editor access required).'; }
+  });
+
+  function switchGame(key){
+    current = key;
+    $('#tabLotto').classList.toggle('active', key==='lotto');
+    $('#tabEuro').classList.toggle('active', key==='euro');
+    linesOut.innerHTML='';
+    renderStats();
+    populateChecker();
+    $('#checkResult').classList.remove('show');
+    $('#checkInput').value='';
+    $('#circleOddsNote').textContent = GAMES[key].jackpotOdds;
+    subscribeCircles(key);
+    setPredictGame(key);
+  }
+  $('#tabLotto').addEventListener('click', ()=>switchGame('lotto'));
+  $('#tabEuro').addEventListener('click', ()=>switchGame('euro'));
+
+  switchGame('lotto');
+
+  // ---- Intuition Quiz: entertainment only ----
+  // Self-report cannot measure real predictive accuracy (see Prediction
+  // Test for the honest version of that). This never touches odds,
+  // circles, predictions, or the database beyond the viewer's own
+  // strictly-private row — it's for fun, nothing more.
+  const QUIZ_QUESTIONS = [
+    "I sometimes know who's calling before I check my phone.",
+    "I've had a dream that felt like it came true later.",
+    "I trust my gut instinct over careful analysis.",
+    "I notice patterns other people seem to miss.",
+    "I've had a strong feeling something was about to happen, and it did.",
+    "I consider myself a lucky person.",
+    "I sometimes think of a song right before it plays.",
+    "I get a 'vibe' about people within seconds of meeting them."
+  ];
+  const QUIZ_LABELS = [1,2,3,4,5];
+  const quizAnswers = new Array(QUIZ_QUESTIONS.length).fill(null);
+
+  const qWrap = $('#quizQuestions');
+  QUIZ_QUESTIONS.forEach((q, qi)=>{
+    const row = document.createElement('div');
+    row.className='quiz-q';
+    const scale = QUIZ_LABELS.map(v=>`<div class="quiz-opt" data-q="${qi}" data-v="${v}">${v===1?'Never':v===5?'Always':v}</div>`).join('');
+    row.innerHTML = `<div class="qtext"></div><div class="quiz-scale">${scale}</div>`;
+    row.querySelector('.qtext').textContent = q;
+    qWrap.appendChild(row);
+  });
+  qWrap.addEventListener('click', e=>{
+    const opt = e.target.closest('.quiz-opt');
+    if(!opt) return;
+    const qi = parseInt(opt.dataset.q,10), v = parseInt(opt.dataset.v,10);
+    quizAnswers[qi] = v;
+    qWrap.querySelectorAll(`.quiz-opt[data-q="${qi}"]`).forEach(o=>o.classList.toggle('selected', parseInt(o.dataset.v,10)===v));
+  });
+
+  const QUIZ_ARCHETYPES = [
+    { max:16, title:'The Skeptic', blurb:"You trust evidence over hunches — which, statistically, puts you in good company: the data agrees with you." },
+    { max:24, title:'The Curious', blurb:"You notice things but don't read too much into them. Healthy balance." },
+    { max:32, title:'The Dreamer', blurb:"You lean into intuition and pattern-seeing. Fun trait to have — still doesn't move lottery balls." },
+    { max:40, title:'The Full Mystic', blurb:"Maximum vibes. Enjoy the quiz result, but the odds on your next ticket are identical to everyone else's." }
+  ];
+
+  // Private per-viewer quiz history: Postgres RLS restricts quiz_history
+  // rows to user_id = auth.uid() only — even an admin account cannot read
+  // someone else's rows. Never aggregated, never surfaced on a leaderboard,
+  // never joined to Focus Circles or the Prediction Test.
+  function renderQuizHistoryRows(rows){
+    const box = $('#quizHistory');
+    box.innerHTML='';
+    if(!rows || rows.length===0){ box.innerHTML = '<div class="circle-empty">No results yet — take the quiz above.</div>'; return; }
+    rows.forEach(r=>{
+      const row = document.createElement('div');
+      row.className='qh-row';
+      row.innerHTML = `<span class="qh-title"></span><span class="qh-meta"></span>`;
+      row.querySelector('.qh-title').textContent = `${r.title} — ${r.total}/40`;
+      row.querySelector('.qh-meta').textContent = new Date(r.at).toLocaleDateString();
+      box.appendChild(row);
+    });
+  }
+
+  async function subscribeQuizHistory(){
+    const box = $('#quizHistory');
+    if(!myId){ box.innerHTML = '<div class="circle-empty">Sign in to keep a private history of your own results.</div>'; return; }
+    box.innerHTML = '<div class="circle-empty">Loading…</div>';
+    try{
+      const { data, error } = await supa.from('quiz_history').select('title,total,at').eq('user_id', myId).order('at', { ascending:false }).limit(10);
+      if(error) throw error;
+      renderQuizHistoryRows(data);
+    }catch(e){ box.innerHTML = '<div class="circle-empty">Could not load your history right now.</div>'; }
+  }
+  subscribeQuizHistory();
+
+  $('#quizBtn').addEventListener('click', async ()=>{
+    if(quizAnswers.some(a=>a===null)){ alert('Answer every question first — just for fun, but let\'s be thorough about it.'); return; }
+    const total = quizAnswers.reduce((a,b)=>a+b,0);
+    const archetype = QUIZ_ARCHETYPES.find(a=>total<=a.max) || QUIZ_ARCHETYPES[QUIZ_ARCHETYPES.length-1];
+    const result = $('#quizResult');
+    result.innerHTML = `
+      <div class="qtitle"></div>
+      <div class="qblurb"></div>
+      <div class="qnote">Score: ${total}/40 — a personality read, not a measurement. Saved only to your own private history if you're signed in; never shared, never aggregated, and it doesn't feed the Prediction Test or any circle. If you want a real test of whether your instincts beat chance, that's what the Prediction Test above is for.</div>
+    `;
+    result.querySelector('.qtitle').textContent = archetype.title;
+    result.querySelector('.qblurb').textContent = archetype.blurb;
+    result.hidden = false;
+
+    if(myId){
+      try{
+        await supa.from('quiz_history').insert({ user_id: myId, title: archetype.title, total, at: new Date().toISOString() });
+        subscribeQuizHistory();
+      }catch(e){ /* saving to your own history is best-effort, never blocks seeing the result */ }
+    }
+  });
+
+  $('#quizResetBtn').addEventListener('click', ()=>{
+    quizAnswers.fill(null);
+    qWrap.querySelectorAll('.quiz-opt').forEach(o=>o.classList.remove('selected'));
+    $('#quizResult').hidden = true;
+  });
+})();
+</script>
+</body>
+</html>

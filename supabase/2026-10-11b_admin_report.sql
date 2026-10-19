@@ -72,3 +72,33 @@ end $$;
 
 revoke all on function public.admin_user_emails() from public, anon;
 grant execute on function public.admin_user_emails() to authenticated;
+
+
+-- 3) Welcome questions: stored once per player, used in the admin research report.
+create table if not exists public.onboarding (
+  user_id       uuid primary key references auth.users(id) on delete cascade,
+  age_confirmed boolean not null default false,
+  game          text check (game in ('lotto','euro','both','neither')),
+  frequency     text check (frequency in ('never','occasionally','weekly','every_draw')),
+  pick_methods  text[] not null default '{}',
+  quiz_answers  int[]  not null default '{}',
+  quiz_score    int,
+  completed_at  timestamptz not null default now(),
+  constraint onboarding_quiz_ok check (
+    (quiz_answers = '{}' and quiz_score is null)
+    or (array_length(quiz_answers,1) = 8 and quiz_score between 8 and 40)
+  )
+);
+alter table public.onboarding enable row level security;
+
+drop policy if exists "players can read their own onboarding" on public.onboarding;
+create policy "players can read their own onboarding" on public.onboarding
+for select using (user_id = auth.uid());
+
+drop policy if exists "admins can read all onboarding" on public.onboarding;
+create policy "admins can read all onboarding" on public.onboarding
+for select using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_admin));
+
+drop policy if exists "players can save their own onboarding" on public.onboarding;
+create policy "players can save their own onboarding" on public.onboarding
+for insert with check (user_id = auth.uid());
