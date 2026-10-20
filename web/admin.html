@@ -168,6 +168,14 @@
   </section>
 
   <section>
+    <h2>UK Lotto vs EuroMillions</h2>
+    <div class="sub">The two games side by side, using the date and search filters above (the game and min-hits filters don’t apply here). Since 10 June each UK Lotto ticket is scored against both rounds, so one Lotto prediction counts as two lines.</div>
+    <div class="tbl-wrap"><table id="vsTbl"></table></div>
+    <div class="sub" style="margin:16px 0 8px;">How many lines got each number of hits — actual versus what random picks would give.</div>
+    <div class="tbl-wrap"><table id="vsDist"></table></div>
+  </section>
+
+  <section>
     <h2>Hits by draw</h2>
     <div class="sub">Every scored prediction that meets the filters. Ringed balls matched the real draw.</div>
     <div class="tbl-wrap"><table id="hitsTbl"></table></div>
@@ -401,10 +409,83 @@
     ];
     $('#tiles').innerHTML = tiles.map(([k,l,s])=>`<div class="tile"><div class="k num">${esc(k)}</div><div class="l">${esc(l)}</div><div class="s">${esc(s)}</div></div>`).join('');
 
+    renderVs();
     renderHits(shown);
     renderPlayers(all);
     renderGroups(all);
     renderPending();
+  }
+
+  function renderVs(){
+    const f = filters();
+    const base = scored().filter(s=>passes(s, Object.assign({}, f, { game:'all' }), true));
+    const pct = x=>(x*100).toFixed(1)+'%';
+    const stats = {};
+    ['lotto','euro'].forEach(k=>{
+      const g = GAMES[k];
+      const L = base.filter(s=>s.p.game===k);
+      const predsK = preds.filter(p=>p.game===k);
+      const scoredPreds = new Set(L.map(s=>s.p.user_id+'|'+s.p.target_date));
+      const players = new Set(L.map(s=>s.p.user_id));
+      const hits = L.reduce((a,s)=>a+s.mainHits.length,0);
+      const picked = L.length*g.mainCount;
+      const exp = L.length*g.mainCount*g.mainCount/g.mainMax;
+      const chance = g.mainCount/g.mainMax;
+      const best = L.reduce((m,s)=> s.mainHits.length > (m?m.mainHits.length:-1) ? s : m, null);
+      const withBonus = L.filter(s=>s.bonus.length);
+      const bPicked = withBonus.reduce((a,s)=>a+s.bonus.length,0);
+      const bHits = withBonus.reduce((a,s)=>a+s.bonusHits.length,0);
+      const bChance = k==='lotto' ? 1/59 : 2/12;
+      const dist = new Array(g.mainCount+1).fill(0); L.forEach(s=>dist[s.mainHits.length]++);
+      const t = { draws:L.length, rate:picked?hits/picked:0, chance, p:picked?binomUpper(hits,picked,chance):1 };
+      stats[k] = { g, L, players:players.size, predCount:scoredPreds.size, hits, exp, rate:t.rate, chance, ratio:exp?hits/exp:0,
+        best, bPicked, bHits, bChance, dist, verdict:verdict(t),
+        open: predsK.filter(p=>!isClosed(p.target_date)).length,
+        awaiting: pendingDraws().filter(d=>d.game===k).length };
+    });
+    const cell = (k, fn)=>{ const x = stats[k]; return x.L.length ? fn(x) : '<span style="color:var(--text-dim)">—</span>'; };
+    const rows = [
+      ['Format', k=>`${GAMES[k].mainCount} from ${GAMES[k].mainMax} + ${GAMES[k].bonusCount===1?'bonus ball':'2 Lucky Stars'}`, true],
+      ['Draw days', k=>k==='lotto'?'Wed &amp; Sat':'Tue &amp; Fri', true],
+      ['Players', x=>x.players],
+      ['Predictions scored', x=>x.predCount],
+      ['Lines scored', x=>x.L.length + (x.g===GAMES.lotto ? ' <span style="color:var(--text-dim)">(2 rounds each)</span>' : '')],
+      ['Main numbers matched', x=>`<b>${x.hits}</b> <span style="color:var(--text-dim)">vs ${x.exp.toFixed(1)} expected</span>`],
+      ['Hit rate', x=>`<b>${pct(x.rate)}</b> <span style="color:var(--text-dim)">chance ${pct(x.chance)}</span>`],
+      ['Versus chance', x=>`<b>${x.ratio.toFixed(2)}×</b>`],
+      ['Verdict', x=>`<span class="pill ${x.verdict[1]}">${esc(x.verdict[0])}</span>`],
+      ['Best single line', x=>x.best ? `<b>${x.best.mainHits.length}/${x.g.mainCount}</b> <span style="color:var(--text-dim)">${esc(x.best.name)}, ${fmtDate(x.best.p.target_date)}</span>` : '—'],
+      ['Lines with 2+ hits', x=>x.L.filter(s=>s.mainHits.length>=2).length],
+      ['Lines with 3+ hits', x=>x.L.filter(s=>s.mainHits.length>=3).length],
+      ['Bonus / stars hit rate', x=>x.bPicked ? `<b>${pct(x.bHits/x.bPicked)}</b> <span style="color:var(--text-dim)">chance ${pct(x.bChance)} · ${x.bHits}/${x.bPicked}</span>` : '<span style="color:var(--text-dim)">none picked</span>'],
+      ['Open predictions', null, false, k=>stats[k].open],
+      ['Draws awaiting a result', null, false, k=>stats[k].awaiting]
+    ];
+    $('#vsTbl').innerHTML = '<thead><tr><th>Measure</th><th>UK Lotto</th><th>EuroMillions</th></tr></thead><tbody>' + rows.map(r=>{
+      const [label, fn, plain, direct] = r;
+      const cells = ['lotto','euro'].map(k=>{
+        if(direct) return `<td class="num">${direct(k)}</td>`;
+        if(plain) return `<td>${fn(k)}</td>`;
+        return `<td class="num">${cell(k, fn)}</td>`;
+      }).join('');
+      return `<tr><td>${label}</td>${cells}</tr>`;
+    }).join('') + '</tbody>';
+
+    // distribution
+    const maxK = 6;
+    let h = '<thead><tr><th>Hits on the line</th><th>UK Lotto — actual</th><th>UK Lotto — chance</th><th>EuroMillions — actual</th><th>EuroMillions — chance</th></tr></thead><tbody>';
+    const hyper = (N,k,i)=>{ const c=(n,r)=>{ if(r<0||r>n) return 0; let x=1; for(let j=1;j<=r;j++) x=x*(n-r+j)/j; return x; }; return c(k,i)*c(N-k,k-i)/c(N,k); };
+    for(let i=0;i<=maxK;i++){
+      const cellFor = k=>{
+        const x = stats[k], g = x.g;
+        if(i>g.mainCount) return ['—','—'];
+        const act = x.dist[i];
+        return [x.L.length ? `<b>${act}</b>` : '—', x.L.length ? (hyper(g.mainMax,g.mainCount,i)*x.L.length).toFixed(1) : '—'];
+      };
+      const a = cellFor('lotto'), b = cellFor('euro');
+      h += `<tr><td>${i} hit${i===1?'':'s'}</td><td class="num">${a[0]}</td><td class="num" style="color:var(--text-dim)">${a[1]}</td><td class="num">${b[0]}</td><td class="num" style="color:var(--text-dim)">${b[1]}</td></tr>`;
+    }
+    $('#vsDist').innerHTML = h + '</tbody>';
   }
 
   function sortRows(rows, sort, getters){

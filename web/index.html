@@ -521,7 +521,7 @@
 
 <section>
   <h2>Focus Circles</h2>
-  <div class="sub">A shared number your group rallies around for draw night.<span id="circleOddsNote" hidden></span></div>
+  <div class="sub">A shared number your group rallies around for draw night. <b>Focus on the number together and believe!</b><span id="circleOddsNote" hidden></span></div>
 
   <div class="circle-form">
     <input type="text" id="circleName" placeholder="Circle name (e.g. Flat 4B)" maxlength="40">
@@ -1079,7 +1079,7 @@
       if(error) throw error;
       await supa.from('circle_members').insert({ circle_id: data.id, user_id: myId });
       $('#circleName').value=''; $('#circleNumber').value='';
-      status.textContent='Circle started. Purely for fun — it does not change the odds.';
+      status.textContent='Circle started. Focus on the number together and believe!';
       await refreshCircles(current);
     }catch(e){
       status.textContent = 'Could not start a circle right now.';
